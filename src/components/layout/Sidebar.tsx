@@ -44,7 +44,7 @@ const Sidebar = ({
       {/* Top Section */}
       <div className="p-0.5 sm:p-0.5 md:p-2">
         {/* Logo with close button for mobile */}
-        <div className="flex items-center justify-between mb-1 md:mb-3">
+        <div className="flex items-center justify-between mb-1 md:mb-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
               BeatStream

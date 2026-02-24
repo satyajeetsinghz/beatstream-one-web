@@ -26,11 +26,8 @@ const MainLayout = () => {
 
       {/* Main Section */}
       <div className="flex-1 flex flex-col bg-white overflow-hidden">
-        {/* Topbar with mobile menu toggle - fixed at top */}
-        <Topbar 
-          onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          isMobileMenuOpen={isMobileMenuOpen}
-        />
+        {/* Topbar - NO PROPS PASSED */}
+        <Topbar />
 
         {/* Content Area - scrollable with top padding for fixed Topbar */}
         <div className="flex-1 overflow-y-auto bg-white scroll-smooth">

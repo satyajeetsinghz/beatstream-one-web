@@ -3,19 +3,14 @@ import { logoutUser } from "@/features/auth/services/auth.service";
 import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded';
 import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import SearchIcon from '@mui/icons-material/Search';
-import MenuIcon from '@mui/icons-material/Menu';
+// import MenuIcon from '@mui/icons-material/Menu';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { SettingsAccessibilityRounded } from "@mui/icons-material";
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 
-interface TopbarProps {
-  onMobileMenuToggle?: () => void;
-  isMobileMenuOpen?: boolean;
-}
-
-const Topbar = ({ onMobileMenuToggle, isMobileMenuOpen }: TopbarProps) => {
+const Topbar = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);

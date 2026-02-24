@@ -3,14 +3,14 @@ import EmailIcon from '@mui/icons-material/Email';
 import BadgeIcon from '@mui/icons-material/Badge';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { useResponsive } from "@/components/layout/hooks/useResponsive";
+// import { useResponsive } from "@/components/layout/hooks/useResponsive";
 
 interface Props {
   profile: any;
 }
 
 const ProfileInfo = ({ profile }: Props) => {
-  const { isMobile } = useResponsive();
+  // const { isMobile } = useResponsive();
 
   // Format date if available
   const formatDate = (timestamp?: any) => {

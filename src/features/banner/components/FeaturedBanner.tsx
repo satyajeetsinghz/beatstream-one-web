@@ -83,7 +83,7 @@ const FeaturedBanner = () => {
         console.log("Learn more clicked");
     };
 
-    const handleBannerContainerClick = (e: React.MouseEvent) => {
+    const handleBannerContainerClick = () => {
         // Don't do anything when clicking on the container itself
     };
 

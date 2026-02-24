@@ -12,7 +12,7 @@ import { usePlaylists } from "@/features/playlists/hooks/usePlaylists";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import { useResponsive } from "@/components/layout/hooks/useResponsive";
+// import { useResponsive } from "@/components/layout/hooks/useResponsive";
 
 interface Props {
     track: ISong;
@@ -31,7 +31,7 @@ const SongCard = ({ track, songs, variant = 'default', index, disableLike = fals
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activeMenu, setActiveMenu] = useState<'main' | 'playlists'>('main');
     const menuRef = useRef<HTMLDivElement>(null);
-    const { isMobile } = useResponsive();
+    // const { isMobile } = useResponsive();
 
     const handlePlay = () => {
         playTrack(track, songs);

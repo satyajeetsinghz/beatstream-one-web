@@ -4,8 +4,10 @@ export interface ISong {
   id: string;
   title: string;
   artist: string;
-  audioUrl: string;
+  audioUrl?: string;
   coverUrl: string;
+  duration?: string;
+  album?: string;
   sectionIds: string[];
   likeCount: number;
   createdAt?: Timestamp;

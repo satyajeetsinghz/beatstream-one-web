@@ -15,6 +15,10 @@ import {
 } from "firebase/firestore";
 import { db } from "@/services/firebase/config";
 
+// Import types from other features
+import { ISong } from '@/features/songs/types';
+import { ITrack } from '@/features/player/types';
+
 /* -----------------------------
    Types
 ------------------------------ */
@@ -33,10 +37,81 @@ export interface PlaylistSong {
   id: string;
   title: string;
   artist: string;
-  image?: string;
+  coverUrl?: string;
   audioUrl?: string;
   addedAt?: any;
+  // Optional fields that might be needed for conversion
+  duration?: string;
+  album?: string;
 }
+
+/* -----------------------------
+   Type Conversion Functions
+------------------------------ */
+
+/**
+ * Convert PlaylistSong to ISong for SongCard component
+ */
+export const playlistSongToISong = (song: PlaylistSong): ISong => ({
+  id: song.id,
+  title: song.title,
+  artist: song.artist,
+  coverUrl: song.coverUrl || '/default-cover.jpg', // Map coverUrl to coverUrl with default
+  duration: song.duration || '3:30',
+  album: song.album || 'Unknown Album',
+  audioUrl: song.audioUrl,
+  sectionIds: [], // Default empty array for playlist songs
+  likeCount: 0,   // Default like count
+});
+
+/**
+ * Convert PlaylistSong to ITrack for Player component
+ */
+export const playlistSongToITrack = (song: PlaylistSong): ITrack => ({
+  id: song.id,
+  title: song.title,
+  artist: song.artist,
+  coverUrl: song.coverUrl || '/default-cover.jpg',
+  duration: song.duration || '3:30',
+  audioUrl: song.audioUrl,
+});
+
+/**
+ * Convert array of PlaylistSong to array of ISong
+ */
+export const playlistSongsToISongs = (songs: PlaylistSong[]): ISong[] => 
+  songs.map(playlistSongToISong);
+
+/**
+ * Convert array of PlaylistSong to array of ITrack
+ */
+export const playlistSongsToITracks = (songs: PlaylistSong[]): ITrack[] => 
+  songs.map(playlistSongToITrack);
+
+/**
+ * Convert ISong to PlaylistSong for adding to playlist
+ */
+export const iSongToPlaylistSong = (song: ISong): PlaylistSong => ({
+  id: song.id,
+  title: song.title,
+  artist: song.artist,
+  coverUrl: song.coverUrl,
+  audioUrl: song.audioUrl,
+  duration: song.duration,
+  album: song.album,
+});
+
+/**
+ * Convert ITrack to PlaylistSong for adding to playlist
+ */
+export const iTrackToPlaylistSong = (track: ITrack): PlaylistSong => ({
+  id: track.id,
+  title: track.title,
+  artist: track.artist,
+  coverUrl: track.coverUrl,
+  audioUrl: track.audioUrl,
+  duration: track.duration,
+});
 
 /* -----------------------------
    Create Playlist
@@ -121,12 +196,32 @@ export const addSongToPlaylist = async (
   if (
     playlistSnap.exists() &&
     !playlistSnap.data().coverURL &&
-    song.image
+    song.coverUrl
   ) {
     await updateDoc(playlistRef, {
-      coverURL: song.image,
+      coverURL: song.coverUrl,
     });
   }
+};
+
+/**
+ * Overloaded version that accepts ISong
+ */
+export const addSongToPlaylistFromISong = async (
+  playlistId: string,
+  song: ISong
+) => {
+  return addSongToPlaylist(playlistId, iSongToPlaylistSong(song));
+};
+
+/**
+ * Overloaded version that accepts ITrack
+ */
+export const addSongToPlaylistFromITrack = async (
+  playlistId: string,
+  track: ITrack
+) => {
+  return addSongToPlaylist(playlistId, iTrackToPlaylistSong(track));
 };
 
 /* -----------------------------
@@ -178,6 +273,30 @@ export const subscribeToPlaylistSongs = (
     })) as PlaylistSong[];
 
     callback(songs);
+  });
+};
+
+/**
+ * Subscribe and get songs as ISong[]
+ */
+export const subscribeToPlaylistSongsAsISongs = (
+  playlistId: string,
+  callback: (songs: ISong[]) => void
+) => {
+  return subscribeToPlaylistSongs(playlistId, (playlistSongs) => {
+    callback(playlistSongsToISongs(playlistSongs));
+  });
+};
+
+/**
+ * Subscribe and get songs as ITrack[]
+ */
+export const subscribeToPlaylistSongsAsITracks = (
+  playlistId: string,
+  callback: (tracks: ITrack[]) => void
+) => {
+  return subscribeToPlaylistSongs(playlistId, (playlistSongs) => {
+    callback(playlistSongsToITracks(playlistSongs));
   });
 };
 

@@ -49,6 +49,8 @@ const HomePage = () => {
       currentRef.addEventListener('scroll', handleScroll);
       return () => currentRef.removeEventListener('scroll', handleScroll);
     }
+
+    return () => { };
   }, []);
 
   const scrollToTop = () => {
@@ -82,7 +84,7 @@ const HomePage = () => {
       <div className={`${isMobile ? 'pb-32' : 'pb-24'}`}>
         {/* Content Container with responsive max width and padding */}
         <div className="space-y-6 sm:space-y-8 md:space-y-10 px-3 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
-          
+
           {/* Featured Banner - Full width with negative margins on mobile */}
           <section className="">
             <FeaturedBanner />
@@ -97,8 +99,8 @@ const HomePage = () => {
 
           {/* Dynamic Sections from Admin */}
           {sections.map((section, index) => (
-            <section 
-              key={section.id} 
+            <section
+              key={section.id}
               className="animate-fadeIn"
               style={{ animationDelay: `${index * 100}ms` }}
             >
@@ -118,7 +120,7 @@ const HomePage = () => {
               <p className="text-xs sm:text-sm text-gray-500 max-w-md mx-auto">
                 Start adding your favorite tracks to get personalized recommendations
               </p>
-              
+
               {/* Quick action buttons for empty state */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 sm:mt-8">
                 <button className="w-full sm:w-auto px-6 py-2.5 bg-[#FA2E6E] text-white text-sm font-medium rounded-full hover:bg-[#E01E5A] transition-colors shadow-sm">
@@ -140,9 +142,8 @@ const HomePage = () => {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className={`fixed z-50 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-800 transition-all duration-200 flex items-center justify-center ${
-            isMobile ? 'bottom-24 right-4' : 'bottom-28 right-6 md:right-8'
-          }`}
+          className={`fixed z-50 w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-800 transition-all duration-200 flex items-center justify-center ${isMobile ? 'bottom-24 right-4' : 'bottom-28 right-6 md:right-8'
+            }`}
           aria-label="Scroll to top"
         >
           <KeyboardArrowUpIcon className="text-sm sm:text-base" />

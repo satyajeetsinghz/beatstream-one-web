@@ -12,7 +12,7 @@ export const PlayerContext = createContext<IPlayerContext>({
     currentIndex: 0,
     volume: 1,
     isMuted: false,
-    playTrack: () => { },
+    playTrack: async () => { }, // Make this async
     togglePlay: () => { },
     seek: () => { },
     playNext: () => { },
@@ -35,31 +35,56 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     const lastSavedTrackId = useRef<string | null>(null);
     const { user } = useAuth();
 
-    // 🔊 PLAY TRACK
-    const playTrack = async (track: ITrack, trackList?: ITrack[]) => {
+    // 🔊 PLAY TRACK - FIXED
+    const playTrack = async (track: ITrack, trackList?: ITrack[]): Promise<void> => {
         const audio = audioRef.current;
-        if (!audio) return;
+        if (!audio) return; // This returns void, but we need to return Promise<void>
+
+        // Fix: Check if audioUrl exists
+        if (!track.audioUrl) {
+            console.error('Cannot play track: No audio URL provided', track);
+            return;
+        }
 
         if (trackList) {
             setQueue(trackList);
             const index = trackList.findIndex(t => t.id === track.id);
             setCurrentIndex(index);
+        } else if (queue.length > 0) {
+            // If no trackList but we have a queue, try to find the track
+            const index = queue.findIndex(t => t.id === track.id);
+            if (index !== -1) {
+                setCurrentIndex(index);
+            }
         }
 
-        audio.src = track.audioUrl;
+        // Set the source and play
+        audio.src = track.audioUrl; // Now safe - we checked it exists
         setCurrentTrack(track);
-        await audio.play();
-        setIsPlaying(true);
+        
+        try {
+            await audio.play();
+            setIsPlaying(true);
+        } catch (error) {
+            console.error('Failed to play track:', error);
+            setIsPlaying(false);
+            throw error; // Re-throw if you want callers to handle errors
+        }
     };
 
-    // ⏭ NEXT
+    // ⏭ NEXT - FIXED
     const playNext = () => {
+        if (queue.length === 0) return;
+        
         setCurrentIndex((prevIndex) => {
             const nextIndex = prevIndex + 1;
 
             if (nextIndex < queue.length) {
                 const nextTrack = queue[nextIndex];
-                playTrack(nextTrack);
+                // Use playTrack but don't await it
+                playTrack(nextTrack).catch(error => 
+                    console.error('Failed to play next track:', error)
+                );
                 return nextIndex;
             }
 
@@ -67,14 +92,19 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         });
     };
 
-    // ⏮ PREVIOUS
+    // ⏮ PREVIOUS - FIXED
     const playPrevious = () => {
+        if (queue.length === 0) return;
+        
         setCurrentIndex((prevIndex) => {
             const prev = prevIndex - 1;
 
             if (prev >= 0) {
                 const prevTrack = queue[prev];
-                playTrack(prevTrack);
+                // Use playTrack but don't await it
+                playTrack(prevTrack).catch(error => 
+                    console.error('Failed to play previous track:', error)
+                );
                 return prev;
             }
 
@@ -82,7 +112,7 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         });
     };
 
-    // ▶️ TOGGLE PLAY
+    // ▶️ TOGGLE PLAY - FIXED
     const togglePlay = () => {
         const audio = audioRef.current;
         if (!audio) return;
@@ -91,8 +121,12 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
             audio.pause();
             setIsPlaying(false);
         } else {
-            audio.play();
-            setIsPlaying(true);
+            // Only try to play if we have a current track
+            if (currentTrack) {
+                audio.play()
+                    .then(() => setIsPlaying(true))
+                    .catch(error => console.error('Failed to play:', error));
+            }
         }
     };
 
@@ -101,8 +135,17 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        audio.currentTime = time;
-        setCurrentTime(time);
+        // Clamp time between 0 and duration
+        const safeTime = Math.max(0, Math.min(time, duration));
+        audio.currentTime = safeTime;
+        setCurrentTime(safeTime);
+    };
+
+    // 🔊 VOLUME
+    const handleSetVolume = (newVolume: number) => {
+        // Clamp volume between 0 and 1
+        const safeVolume = Math.max(0, Math.min(1, newVolume));
+        setVolume(safeVolume);
     };
 
     // 🔇 TOGGLE MUTE
@@ -117,17 +160,23 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
 
         const updateTime = () => setCurrentTime(audio.currentTime);
         const setMeta = () => setDuration(audio.duration);
+        const handleError = (e: Event) => {
+            console.error('Audio error:', e);
+            setIsPlaying(false);
+        };
 
         audio.addEventListener("timeupdate", updateTime);
         audio.addEventListener("loadedmetadata", setMeta);
+        audio.addEventListener("error", handleError);
 
         return () => {
             audio.removeEventListener("timeupdate", updateTime);
             audio.removeEventListener("loadedmetadata", setMeta);
+            audio.removeEventListener("error", handleError);
         };
     }, []);
 
-    // 🔊 AUTO NEXT WHEN SONG ENDS
+    // 🔊 AUTO NEXT WHEN SONG ENDS - FIXED
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio) return;
@@ -135,7 +184,10 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         const handleEnded = () => {
             if (currentIndex < queue.length - 1) {
                 const nextTrack = queue[currentIndex + 1];
-                playTrack(nextTrack);
+                // Use playTrack but don't await it
+                playTrack(nextTrack).catch(error => 
+                    console.error('Failed to play next track:', error)
+                );
             } else {
                 setIsPlaying(false);
             }
@@ -151,6 +203,7 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     // 📝 SAVE TO HISTORY WHEN TRACK CHANGES
     useEffect(() => {
         if (!currentTrack || !user) return;
+        if (!currentTrack.id) return;
 
         // Prevent duplicate saves
         if (lastSavedTrackId.current === currentTrack.id) return;
@@ -192,7 +245,7 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
                 playNext,
                 playPrevious,
                 volume,
-                setVolume,
+                setVolume: handleSetVolume,
                 isMuted,
                 toggleMute,
             }}

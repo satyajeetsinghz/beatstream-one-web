@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getPlaylistById,
@@ -7,6 +7,10 @@ import {
   deletePlaylist,
   Playlist,
   PlaylistSong,
+  playlistSongToISong,      // Import conversion
+  playlistSongsToISongs,    // Import conversion
+  // playlistSongToITrack,     // Import conversion
+  playlistSongsToITracks,   // Import conversion
 } from "../services/playlistService";
 import SongCard from "@/features/songs/components/SongCard";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
@@ -19,7 +23,6 @@ import LockIcon from "@mui/icons-material/Lock";
 import { usePlayer } from "@/features/player/hooks/usePlayer";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useClickOutside } from "@/features/playlists/hooks/useClickOutside";
-import { useRef } from "react";
 import { useResponsive } from "@/components/layout/hooks/useResponsive";
 
 const PlaylistPage = () => {
@@ -27,7 +30,7 @@ const PlaylistPage = () => {
   const navigate = useNavigate();
   const { playTrack } = usePlayer();
   const { user } = useAuth();
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile} = useResponsive();
 
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [songs, setSongs] = useState<PlaylistSong[]>([]);
@@ -60,19 +63,23 @@ const PlaylistPage = () => {
   }, [id]);
 
   /* -----------------------------
-     Actions
+     Actions - FIXED with conversion
   ------------------------------ */
 
   const handlePlayAll = () => {
     if (songs.length > 0) {
-      playTrack(songs[0], songs);
+      // Convert songs to ITrack[] before passing to player
+      const tracks = playlistSongsToITracks(songs);
+      playTrack(tracks[0], tracks);
     }
   };
 
   const handleShufflePlay = () => {
     if (songs.length > 0) {
       const shuffled = [...songs].sort(() => Math.random() - 0.5);
-      playTrack(shuffled[0], shuffled);
+      // Convert shuffled songs to ITrack[]
+      const tracks = playlistSongsToITracks(shuffled);
+      playTrack(tracks[0], tracks);
     }
   };
 
@@ -267,14 +274,14 @@ const PlaylistPage = () => {
           )}
         </div>
 
-        {/* Songs Grid */}
+        {/* Songs Grid - FIXED with conversion */}
         {songs.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {songs.map((song, index) => (
               <SongCard
                 key={song.id}
-                track={song}
-                songs={songs}
+                track={playlistSongToISong(song)}  // ← Convert single song
+                songs={playlistSongsToISongs(songs)} // ← Convert all songs
                 index={index}
                 variant="default"
               />

@@ -3,7 +3,7 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import { useState } from "react";
-import { useResponsive } from "@/components/layout/hooks/useResponsive";
+// import { useResponsive } from "@/components/layout/hooks/useResponsive";
 
 interface Props {
   playlist: any;
@@ -13,7 +13,7 @@ interface Props {
 const PlaylistCard = ({ playlist, variant = 'default' }: Props) => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
-  const { isMobile } = useResponsive();
+  // const { isMobile } = useResponsive();
 
   // Generate a gradient based on playlist name for consistent coloring
   const getGradient = (name: string) => {

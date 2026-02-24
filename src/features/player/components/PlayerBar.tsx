@@ -7,8 +7,8 @@ import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeDownIcon from '@mui/icons-material/VolumeDown';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import VolumeMuteIcon from '@mui/icons-material/VolumeMute';
-import QueueMusicIcon from '@mui/icons-material/QueueMusic';
-import DevicesIcon from '@mui/icons-material/Devices';
+// import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+// import DevicesIcon from '@mui/icons-material/Devices';
 import { useState, useEffect, useRef } from "react";
 import { useResponsive } from "@/components/layout/hooks/useResponsive";
 
@@ -30,7 +30,6 @@ const PlayerBar = () => {
         playPrevious,
         volume: playerVolume,
         setVolume: setPlayerVolume,
-        isMuted,
         toggleMute: playerToggleMute
     } = usePlayer();
 

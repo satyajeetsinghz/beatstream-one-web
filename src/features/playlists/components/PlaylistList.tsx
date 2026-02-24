@@ -23,9 +23,9 @@ const PlaylistList = () => {
   const editInputRef = useRef<HTMLInputElement>(null);
   const { isMobile } = useResponsive();
 
-  useClickOutside(menuRef, () => {
-    setOpenMenuId(null);
-  });
+  useClickOutside(menuRef as React.RefObject<HTMLElement>, () => {
+  setOpenMenuId(null);
+});
 
   // Handle click outside for edit mode
   useEffect(() => {
