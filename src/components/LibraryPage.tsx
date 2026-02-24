@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUserPlaylists } from "@/features/playlists/hooks/useUserPlaylist";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+// import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useLikedSongs } from "@/features/likes/hooks/useLikedSongs";
 import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -12,7 +12,7 @@ import { useResponsive } from "@/components/layout/hooks/useResponsive";
 import PlaylistCard from "@/features/playlists/components/PlaylistCard";
 
 const LibraryPage = () => {
-  const { user } = useAuth();
+//   const { user } = useAuth();
   const { playlists, loading: playlistsLoading } = useUserPlaylists();
   const { likedSongs, loading: likedLoading } = useLikedSongs();
   const [showCreateModal, setShowCreateModal] = useState(false);
