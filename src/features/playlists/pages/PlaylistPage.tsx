@@ -264,7 +264,8 @@ const PlaylistPage = () => {
 
             {/* Description - hidden on mobile to save space */}
             <p className="hidden md:block text-gray-500 text-xs sm:text-sm mt-4 max-w-xl leading-relaxed text-center md:text-left">
-              {playlist.description || `A collection of ${songs.length} songs curated by ${user?.name || 'you'}.`}
+              {/* {playlist.description || `A collection of ${songs.length} songs curated by ${user?.name || 'you'}.`} */}
+              {`A collection of ${songs.length} songs curated by ${user?.name || 'you'}.`}
             </p>
           </div>
 
