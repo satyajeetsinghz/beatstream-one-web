@@ -10,6 +10,7 @@ import ProfilePage from "@/features/profile/ProfilePage";
 import ProtectedAdminRoute from "@/features/admin/components/ProtectedAdminRoute";
 import PlaylistPage from "@/features/playlists/pages/PlaylistPage";
 import LibraryPage from "@/components/LibraryPage";
+import JustinBieberSwagPlayer from "@/components/ui/JustinBieberSwagPlayer";
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -36,15 +37,23 @@ const router = createBrowserRouter([
       },
       {
         path: "search",
-        element: <div>Search Page</div>,
+        element: <JustinBieberSwagPlayer/>,
       },
       {
         path: "library",
-        element: <LibraryPage/>,
+        element: <LibraryPage />,
       },
       {
         path: "liked",
         element: <LikedSongs />,
+      },
+      {
+        path: "profile",
+        element: <ProfilePage />,
+      },
+      {
+        path: "playlist/:id",
+        element: <PlaylistPage />,
       },
     ],
   },
@@ -64,19 +73,6 @@ const router = createBrowserRouter([
       </ProtectedAdminRoute>
     ),
   },
-  {
-    path: "/profile",
-    element: (
-      <ProfilePage />
-    ),
-  },
-  {
-    path: "/playlist/:id",
-    element: (
-      <PlaylistPage />
-    ),
-  },
 ]);
-
 
 export default router;

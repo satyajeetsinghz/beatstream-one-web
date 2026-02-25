@@ -3,10 +3,11 @@ import { useProfile } from "./hooks/useProfile";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileInfo from "./components/ProfileInfo";
 import EditProfileModal from "./components/EditProfileModal";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import SettingsIcon from '@mui/icons-material/Settings';
+// import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+// import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate } from "react-router-dom";
 import { useResponsive } from "@/components/layout/hooks/useResponsive";
+import { ChevronLeftRounded } from "@mui/icons-material";
 
 const ProfilePage = () => {
   const { profile, loading, updateProfile } = useProfile();
@@ -27,46 +28,44 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-6 sm:px-6 sm:py-8 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Profile Card */}
-        <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm overflow-hidden">
+    <div className="min-h-screen bg-white">
+      {/* Mobile: centered with less padding, Tablet/Desktop: full width with minimal padding */}
+      <div className="w-full">
+        {/* Mobile: max-w-sm to center content, Tablet/Desktop: full width */}
+        <div className="max-w-sm sm:max-w-full mx-auto">
+          {/* Profile Card - Full width on all screens */}
+          <div className="bg-white rounded-xl sm:rounded-xl md:rounded-2xl shadow-sm overflow-hidden w-full">
 
-          {/* Header with gradient background */}
-          <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 px-4 sm:px-6 md:px-8 py-4 sm:py-5">
-            <div className="flex items-center justify-between">
-              {/* Back Button */}
-              <button
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors duration-200 group"
-                aria-label="Go back"
-              >
-                <div className="p-1.5 sm:p-2 rounded-full bg-gray-100 group-hover:bg-[#FA2E6E]/10 transition-colors duration-200">
-                  <ArrowBackIcon fontSize="small" className="text-gray-600 group-hover:text-[#FA2E6E]" />
-                </div>
-                {!isMobile && <span className="text-xs font-medium">Back</span>}
-              </button>
+            {/* Header with gradient background - Responsive padding */}
+            <div className="bg-white">
+              <div className="flex items-center justify-start px-4 mb-4 mt-6">
+                {/* Back Button */}
+                <button
+                  onClick={() => navigate(-1)}
+                  className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
+                >
+                  <div className="">
+                    <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
+                  </div>
+                  {/* <span className="text-xs">Back</span> */}
+                </button>
 
-              {/* Page Title - Visible on mobile */}
-              {isMobile && (
-                <h1 className="text-base font-semibold text-gray-900">Profile</h1>
-              )}
-
-              {/* Settings Button */}
-              <button className="p-1.5 sm:p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
-                <SettingsIcon fontSize="small" className="text-gray-600" />
-              </button>
+                {/* Page Title - Visible on mobile */}
+                {isMobile && (
+                  <h1 className="text-base font-semibold text-neutral-800">Profile</h1>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Profile Content */}
-          <div className="p-4 sm:p-6 md:p-8">
-            <ProfileHeader profile={profile} onEdit={() => setOpen(true)} />
+            {/* Profile Content - Responsive padding */}
+            <div className="p-3 sm:p-4 md:p-5 lg:p-6">
+              <ProfileHeader profile={profile} onEdit={() => setOpen(true)} />
 
-            {/* Divider */}
-            <div className="my-6 sm:my-8 border-t border-gray-200"></div>
+              {/* Divider with responsive spacing */}
+              <div className="my-4 sm:my-5 md:my-6 border-t border-gray-200"></div>
 
-            <ProfileInfo profile={profile} />
+              <ProfileInfo profile={profile} />
+            </div>
           </div>
         </div>
       </div>

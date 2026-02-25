@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import HomeIcon from "@mui/icons-material/Home";
-import SearchIcon from "@mui/icons-material/Search";
+// import SearchIcon from "@mui/icons-material/Search";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
-import FavoriteIcon from "@mui/icons-material/Favorite";
+// import FavoriteIcon from "@mui/icons-material/Favorite";
 import CloseIcon from "@mui/icons-material/Close";
 import { useState, useEffect } from "react";
 import AddIcon from "@mui/icons-material/Add";
@@ -34,9 +34,9 @@ const Sidebar = ({
 
   const navItems = [
     { path: "/", label: "Home", icon: HomeIcon },
-    { path: "/search", label: "Search", icon: SearchIcon },
+    // { path: "/search", label: "Search", icon: SearchIcon },
     { path: "/library", label: "Your Library", icon: LibraryMusicIcon },
-    { path: "/liked", label: "Liked Songs", icon: FavoriteIcon },
+    // { path: "/liked", label: "Liked Songs", icon: FavoriteIcon },
   ];
 
   const sidebarContent = (
@@ -106,7 +106,7 @@ const Sidebar = ({
       <div className="flex-1 flex flex-col border-t border-gray-200 px-3 py-3 sm:py-4 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between mb-2 sm:mb-3 px-2">
-          <h2 className="text-[10px] sm:text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <h2 className="text-[10px] sm:text-xs font-semibold text-gray-700 tracking-wider">
             Playlists
           </h2>
 

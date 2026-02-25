@@ -1,9 +1,9 @@
 // components/layout/MobileNav.tsx
 import { Link, useLocation } from "react-router-dom";
 import HomeIcon from '@mui/icons-material/Home';
-import SearchIcon from '@mui/icons-material/Search';
+// import SearchIcon from '@mui/icons-material/Search';
 import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
-import FavoriteIcon from '@mui/icons-material/Favorite';
+// import FavoriteIcon from '@mui/icons-material/Favorite';
 import PersonIcon from '@mui/icons-material/Person';
 
 const MobileNav = () => {
@@ -11,9 +11,9 @@ const MobileNav = () => {
   
   const navItems = [
     { path: '/', icon: HomeIcon, label: 'Home' },
-    { path: '/search', icon: SearchIcon, label: 'Search' },
+    // { path: '/search', icon: SearchIcon, label: 'Search' },
     { path: '/library', icon: LibraryMusicIcon, label: 'Library' },
-    { path: '/liked', icon: FavoriteIcon, label: 'Liked' },
+    // { path: '/liked', icon: FavoriteIcon, label: 'Liked' },
     { path: '/profile', icon: PersonIcon, label: 'Profile' },
   ];
 
