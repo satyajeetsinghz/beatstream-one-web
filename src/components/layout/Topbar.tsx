@@ -1,13 +1,13 @@
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { logoutUser } from "@/features/auth/services/auth.service";
-import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded';
-import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
+// import NavigateBeforeRoundedIcon from '@mui/icons-material/NavigateBeforeRounded';
+// import NavigateNextRoundedIcon from '@mui/icons-material/NavigateNextRounded';
 import SearchIcon from '@mui/icons-material/Search';
 // import MenuIcon from '@mui/icons-material/Menu';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { SettingsAccessibilityRounded } from "@mui/icons-material";
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useProfile } from "@/features/profile/hooks/useProfile";
 
 const Topbar = () => {
@@ -19,7 +19,7 @@ const Topbar = () => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation();
 
   // Handle click outside to close menus
   useEffect(() => {
@@ -64,15 +64,15 @@ const Topbar = () => {
     };
   }, []);
 
-  const handleBack = () => {
-    if (location.pathname !== '/') {
-      navigate(-1);
-    }
-  };
+  // const handleBack = () => {
+  //   if (location.pathname !== '/') {
+  //     navigate(-1);
+  //   }
+  // };
 
-  const handleForward = () => {
-    navigate(1);
-  };
+  // const handleForward = () => {
+  //   navigate(1);
+  // };
 
   const handleProfileClick = () => {
     setIsUserMenuOpen(false);
@@ -101,44 +101,15 @@ const Topbar = () => {
   return (
     <>
       {/* Main Topbar */}
-      <div className="h-14 sm:h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 fixed top-0 left-0 right-0 z-50 px-5 sm:px-4 md:px-6">
+      <div className="block lg:hidden h-14 sm:h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 left-0 right-0 z-50 px-5 sm:px-4 md:px-6">
         <div className="flex items-center justify-between h-full max-w-7xl mx-auto">
           {/* Left Section */}
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Mobile Menu Button */}
-            {/* <button
-              onClick={onMobileMenuToggle}
-              className="lg:hidden p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors mobile-menu-button"
-              aria-label="Menu"
-              aria-expanded={isMobileMenuOpen}
-            >
-              <MenuIcon fontSize="small" className="text-gray-600" />
-            </button> */}
-
-            {/* Navigation Controls - hidden on mobile */}
-            <div className="hidden sm:flex items-center gap-1 sm:gap-2">
-              <button
-                onClick={handleBack}
-                className="p-1 sm:p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-600"
-                aria-label="Go back"
-              >
-                <NavigateBeforeRoundedIcon fontSize="small" />
-              </button>
-              <button
-                onClick={handleForward}
-                className="p-1 sm:p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-gray-600"
-                aria-label="Go forward"
-              >
-                <NavigateNextRoundedIcon fontSize="small" />
-              </button>
-            </div>
-
             {/* Logo/Brand */}
             <button
               onClick={() => navigate('/')}
               className="text-base sm:text-lg md:text-xl font-semibold text-gray-900 hover:text-gray-700 transition-colors"
             >
-              {/* <span className="hidden xs:inline">BeatStream</span> */}
               <span className="block md:hidden">BS</span>
             </button>
           </div>

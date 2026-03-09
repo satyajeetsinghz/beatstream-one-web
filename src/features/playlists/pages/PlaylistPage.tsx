@@ -157,11 +157,12 @@ const PlaylistPage = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
+          className="flex items-center gap-0 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
         >
           <div className="">
             <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
           </div>
+          <h1 className="text-lg font-semibold text-[#FA2E6E]">Playlist</h1>
           {/* <span className="text-xs">Back</span> */}
         </button>
 
@@ -382,7 +383,6 @@ const PlaylistPage = () => {
                       className="opacity-0 group-hover:opacity-100 text-[#FA2E6E] hover:text-[#E01E5A] transition"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setMenuOpen(true);
                       }}
                     >
                       <MoreHorizIcon fontSize="small" />

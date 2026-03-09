@@ -6,14 +6,14 @@ import EditProfileModal from "./components/EditProfileModal";
 // import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 // import SettingsIcon from '@mui/icons-material/Settings';
 import { useNavigate } from "react-router-dom";
-import { useResponsive } from "@/components/layout/hooks/useResponsive";
+// import { useResponsive } from "@/components/layout/hooks/useResponsive";
 import { ChevronLeftRounded } from "@mui/icons-material";
 
 const ProfilePage = () => {
   const { profile, loading, updateProfile } = useProfile();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { isMobile } = useResponsive();
+  // const { isMobile } = useResponsive();
 
   // Loading State
   if (loading) {
@@ -51,9 +51,9 @@ const ProfilePage = () => {
                 </button>
 
                 {/* Page Title - Visible on mobile */}
-                {isMobile && (
-                  <h1 className="text-base font-semibold text-neutral-800">Profile</h1>
-                )}
+                
+                  <h1 className="text-lg font-semibold text-[#FA2E6E]">Profile</h1>
+              
               </div>
             </div>
 

@@ -19,7 +19,7 @@ const MobileNav = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 z-40 lg:hidden">
-      <div className="flex items-center justify-around py-2">
+      <div className="flex items-center justify-around py-1.5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
@@ -32,7 +32,7 @@ const MobileNav = () => {
                 isActive ? 'text-[#FA2E6E]' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
-              <Icon fontSize="small" />
+              <Icon fontSize="medium" />
               <span className="text-[10px] mt-1 font-medium">{item.label}</span>
               {/* {isActive && (
                 <span className="absolute -top-1 w-1 h-1 bg-[#FA2E6E] rounded-full" />

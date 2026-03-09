@@ -115,7 +115,8 @@ const LikedSongs = () => {
                     <div className="">
                         <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
                     </div>
-                    {/* <span className="text-xs">Back</span> */}
+                    <h1 className="text-lg font-semibold text-[#FA2E6E]">Liked</h1>
+
                 </button>
             </div>
 

@@ -18,14 +18,17 @@ const PlaylistList = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
+  const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const { isMobile } = useResponsive();
 
   useClickOutside(menuRef as React.RefObject<HTMLElement>, () => {
-  setOpenMenuId(null);
-});
+    setOpenMenuId(null);
+    setMenuPosition(null);
+  });
 
   // Handle click outside for edit mode
   useEffect(() => {
@@ -42,13 +45,26 @@ const PlaylistList = () => {
     };
   }, [editingId]);
 
+  // Handle escape key
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenMenuId(null);
+        setMenuPosition(null);
+        setEditingId(null);
+      }
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, []);
+
   const handleRename = async (id: string) => {
     if (editName.trim()) {
       await updatePlaylist(id, { name: editName.trim() });
-
       setEditingId(null);
       setEditName("");
       setOpenMenuId(null);
+      setMenuPosition(null);
     }
   };
 
@@ -56,10 +72,26 @@ const PlaylistList = () => {
     if (window.confirm("Are you sure you want to delete this playlist?")) {
       setDeletingId(id);
       await deletePlaylist(id);
-
       setDeletingId(null);
       setOpenMenuId(null);
+      setMenuPosition(null);
     }
+  };
+
+  const handleMenuClick = (e: React.MouseEvent, playlistId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const button = buttonRefs.current.get(playlistId);
+    if (button) {
+      const rect = button.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + window.scrollY + 5,
+        left: rect.left + window.scrollX - 140, // Adjust based on menu width
+      });
+    }
+    
+    setOpenMenuId(openMenuId === playlistId ? null : playlistId);
   };
 
   if (loading) {
@@ -90,7 +122,7 @@ const PlaylistList = () => {
   }
 
   return (
-    <div className="mt-2 space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto scroll-smooth">
+    <div className="mt-2 space-y-1 h-40 overflow-y-auto scroll-smooth bg-white relative pr-1">
       {playlists.map((playlist) => (
         <div
           key={playlist.id}
@@ -159,8 +191,9 @@ const PlaylistList = () => {
 
                   {/* Hover Play Button */}
                   <div
-                    className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-200 ${hoveredId === playlist.id ? "opacity-100" : "opacity-0"
-                      }`}
+                    className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity duration-200 ${
+                      hoveredId === playlist.id ? "opacity-100" : "opacity-0"
+                    }`}
                   >
                     <PlayArrowIcon
                       className="text-white"
@@ -183,13 +216,14 @@ const PlaylistList = () => {
 
                 {/* More Options Button */}
                 <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setOpenMenuId(openMenuId === playlist.id ? null : playlist.id);
+                  ref={(el) => {
+                    if (el) buttonRefs.current.set(playlist.id, el);
+                    else buttonRefs.current.delete(playlist.id);
                   }}
-                  className={`p-1 rounded-full transition-all duration-200 ${hoveredId === playlist.id ? "opacity-100" : "opacity-0"
-                    } hover:bg-gray-200`}
+                  onClick={(e) => handleMenuClick(e, playlist.id)}
+                  className={`py-0.5 px-2 rounded-md transition-all duration-200 ${
+                    hoveredId === playlist.id ? "opacity-100" : "opacity-0"
+                  } hover:bg-gray-200`}
                   aria-label="More options"
                 >
                   <MoreHorizIcon
@@ -199,17 +233,22 @@ const PlaylistList = () => {
                 </button>
               </Link>
 
-              {/* Dropdown Menu */}
-              {openMenuId === playlist.id && (
+              {/* Dropdown Menu - Fixed to viewport */}
+              {openMenuId === playlist.id && menuPosition && (
                 <div
                   ref={menuRef}
-                  className="absolute right-2 top-10 sm:top-12 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50 w-36 sm:w-40 animate-fadeIn"
+                  className="fixed z-[100] bg-white rounded-xl shadow-xl border border-gray-200 py-1 w-36 sm:w-40"
+                  style={{
+                    top: menuPosition.top,
+                    left: menuPosition.left,
+                  }}
                 >
                   <button
                     onClick={() => {
                       setEditingId(playlist.id);
                       setEditName(playlist.name);
                       setOpenMenuId(null);
+                      setMenuPosition(null);
                     }}
                     className="w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
                   >
@@ -222,8 +261,9 @@ const PlaylistList = () => {
                   <button
                     onClick={() => handleDelete(playlist.id)}
                     disabled={deletingId === playlist.id}
-                    className={`w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 ${deletingId === playlist.id ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
+                    className={`w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 ${
+                      deletingId === playlist.id ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
                     {deletingId === playlist.id ? (
                       <>
@@ -243,19 +283,6 @@ const PlaylistList = () => {
           )}
         </div>
       ))}
-
-      {/* Create New Playlist Link */}
-      <Link
-        to="/playlist/new"
-        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-gray-500 hover:text-gray-700 mt-2"
-      >
-        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center">
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </div>
-        <span className="text-xs sm:text-sm font-medium">New Playlist</span>
-      </Link>
     </div>
   );
 };

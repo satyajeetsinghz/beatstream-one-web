@@ -40,6 +40,7 @@ const LibraryPage = () => {
             <div className="">
               <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
             </div>
+            <h1 className="text-lg font-semibold text-[#FA2E6E]">Library</h1>
             {/* <span className="text-xs">Back</span> */}
           </button>
         </div>
@@ -178,12 +179,13 @@ const LibraryPage = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
+          className="flex items-center gap-0 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
         >
           <div className="">
             <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
           </div>
           {/* <span className="text-xs">Back</span> */}
+          <h1 className="text-lg font-semibold text-[#FA2E6E]">Library</h1>
         </button>
         <button
           onClick={() => setShowCreateModal(true)}

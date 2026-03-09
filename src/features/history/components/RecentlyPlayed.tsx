@@ -2,14 +2,19 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useHistory } from "../hooks/useHistory";
 import SongCard from "@/features/songs/components/SongCard";
 import HistoryIcon from '@mui/icons-material/History';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { clearHistory } from "../services/historyService";
 import { useResponsive } from "@/components/layout/hooks/useResponsive";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const RecentlyPlayed = () => {
   const { user } = useAuth();
   const { historyTracks, loading, refresh } = useHistory(user?.uid || "");
   const [clearing, setClearing] = useState(false);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { isMobile } = useResponsive();
 
   const handleClearHistory = async () => {
@@ -33,6 +38,26 @@ const RecentlyPlayed = () => {
     }
   };
 
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftArrow(scrollLeft > 10);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
   // Loading State
   if (loading) {
     return (
@@ -46,15 +71,17 @@ const RecentlyPlayed = () => {
           <div className="w-20 sm:w-16 h-6 sm:h-8 bg-gray-200 rounded-full ml-auto sm:ml-0"></div>
         </div>
 
-        {/* Grid Skeleton - Responsive */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="aspect-square bg-gray-200 rounded-lg sm:rounded-xl mb-2"></div>
-              <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-              <div className="h-2 sm:h-3 bg-gray-200 rounded w-1/2"></div>
-            </div>
-          ))}
+        {/* Horizontal Scroll Skeleton */}
+        <div className="relative">
+          <div className="flex gap-3 sm:gap-4 overflow-x-hidden">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-40 sm:w-44 md:w-48 animate-pulse">
+                <div className="aspect-square bg-gray-200 rounded-lg sm:rounded-xl mb-2"></div>
+                <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
+                <div className="h-2 sm:h-3 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -64,7 +91,7 @@ const RecentlyPlayed = () => {
   if (!historyTracks || historyTracks.length === 0) return null;
 
   return (
-    <div className="w-full">
+    <div className="w-full group/recent">
       {/* Header with Apple Music styling - Responsive */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -79,7 +106,7 @@ const RecentlyPlayed = () => {
             <button
               onClick={handleClearHistory}
               disabled={clearing}
-              className={`ml-0 sm:ml-2 text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-full hover:bg-red-50 whitespace-nowrap ${
+              className={`ml-0 sm:ml-2 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-[#FA2E6E] whitespace-nowrap ${
                 clearing ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -95,39 +122,56 @@ const RecentlyPlayed = () => {
         </div>
       </div>
 
-      {/* Grid Layout - Responsive */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
-        {historyTracks.map((track, index) => (
-          <div key={track.id} className="relative group">
-            {/* Recent badge for first item - Responsive positioning */}
-            {/* {index === 0 && (
-              <div className="absolute -top-1.5 sm:-top-2 -right-1.5 sm:-right-2 z-10">
-                <div className="relative">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#FA2E6E] rounded-full animate-pulse"></div>
-                  <div className="absolute inset-0 bg-[#FA2E6E] rounded-full animate-ping opacity-20"></div>
-                </div>
-              </div>
-            )} */}
+      {/* Horizontal Scroll Container with Navigation Buttons */}
+      <div className="relative">
+        {/* Left Navigation Button */}
+        {showLeftArrow && (
+          <button
+            onClick={scrollLeft}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover/recent:opacity-100 transition-opacity duration-200 hover:bg-gray-50 -ml-3"
+            aria-label="Scroll left"
+          >
+            <ChevronLeftIcon className="text-gray-600" fontSize="small" />
+          </button>
+        )}
 
-            {/* Optional: Show index number on hover for desktop */}
-            {/* {!isMobile && index < 3 && (
-              <div className="absolute -top-2 -left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="w-5 h-5 bg-[#FA2E6E] rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-lg">
-                  {index + 1}
-                </div>
+        {/* Scrollable Content */}
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="overflow-x-auto scrollbar-hide scroll-smooth pb-2"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          <div className="flex gap-3 sm:gap-4 md:gap-5 cursor-pointer" style={{ minWidth: 'min-content' }}>
+            {historyTracks.map((track, index) => (
+              <div key={track.id} className="w-40 sm:w-44 md:w-48 flex-shrink-0">
+                <SongCard
+                  track={track}
+                  songs={historyTracks}
+                  variant="default"
+                  index={index}
+                  disableLike={true}
+                />
               </div>
-            )} */}
-
-            <SongCard
-              track={track}
-              songs={historyTracks}
-              variant="default"
-              index={index}
-              disableLike={true}
-            />
+            ))}
           </div>
-        ))}
+        </div>
+
+        {/* Right Navigation Button */}
+        {showRightArrow && (
+          <button
+            onClick={scrollRight}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover/recent:opacity-100 transition-opacity duration-200 hover:bg-gray-50 -mr-3"
+            aria-label="Scroll right"
+          >
+            <ChevronRightIcon className="text-gray-600" fontSize="small" />
+          </button>
+        )}
       </div>
+
+      {/* Gradient fade indicators */}
+      <div className="absolute left-0 mt-2 w-8 h-32 bg-gradient-to-r from-white to-transparent pointer-events-none"></div>
+      <div className="absolute right-0 mt-2 w-8 h-32 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
 
       {/* View all link for mobile (if more than 6 items) */}
       {historyTracks.length > 6 && isMobile && (

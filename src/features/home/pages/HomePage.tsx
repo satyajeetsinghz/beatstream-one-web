@@ -5,19 +5,33 @@ import { ISong } from "@/features/songs/types";
 import RecentlyPlayed from "@/features/history/components/RecentlyPlayed";
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import PersonIcon from '@mui/icons-material/Person';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useSections } from "@/features/sections/hooks/useSections";
 import { DynamicSection } from "@/features/sections/components/DynamicSection";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useProfile } from "@/features/profile/hooks/useProfile";
+import { logoutUser } from "@/features/auth/services/auth.service";
+import { useNavigate } from "react-router-dom";
 import FeaturedBanner from "@/features/banner/components/FeaturedBanner";
 import { useResponsive } from "@/components/layout/hooks/useResponsive";
 
 const HomePage = () => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [songs, setSongs] = useState<ISong[]>([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
   const { sections, loading: sectionsLoading } = useSections();
-  const { isMobile } = useResponsive(); // Only destructure what we need
+  const { isMobile } = useResponsive();
+  const navigate = useNavigate();
+
+  // Check if user is admin
+  const isAdmin = user?.role === "admin" || profile?.role === "admin";
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -53,6 +67,39 @@ const HomePage = () => {
     return () => { };
   }, []);
 
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node) &&
+        profileButtonRef.current &&
+        !profileButtonRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handle escape key to close menu
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isProfileMenuOpen) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, [isProfileMenuOpen]);
+
   const scrollToTop = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTo({
@@ -60,6 +107,21 @@ const HomePage = () => {
         behavior: 'smooth'
       });
     }
+  };
+
+  const handleProfileClick = () => {
+    setIsProfileMenuOpen(false);
+    navigate("/profile");
+  };
+
+  const handleAdminClick = () => {
+    setIsProfileMenuOpen(false);
+    navigate("/admin");
+  };
+
+  const handleSignOut = async () => {
+    setIsProfileMenuOpen(false);
+    await logoutUser();
   };
 
   // Loading State
@@ -77,13 +139,88 @@ const HomePage = () => {
   return (
     <div
       ref={scrollContainerRef}
-      className="h-[calc(100vh-6rem)] overflow-y-auto bg-white scroll-smooth"
+      className="h-full overflow-y-auto bg-white scroll-smooth"
       style={{ scrollbarWidth: 'thin' }}
     >
       {/* Main Content with bottom padding for player bar and mobile nav */}
-      <div className={`${isMobile ? 'pb-32' : 'pb-24'}`}>
+      <div className={`${isMobile ? 'pb-4' : 'pb-0'}`}>
         {/* Content Container with responsive max width and padding */}
-        <div className="space-y-6 sm:space-y-8 md:space-y-10 px-3 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="space-y-6 sm:space-y-8 md:space-y-10 px-3 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto py-10 lg:py-0">
+
+          {/* Welcome Page - Only for Mobile Version with Profile Icon */}
+          <div className="flex items-center justify-between lg:hidden py-2 px-2">
+            <h1 className="text-2xl font-bold text-gray-900">Home</h1>
+            
+            {/* Profile Icon with Dropdown */}
+            <div className="relative">
+              <button
+                ref={profileButtonRef}
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="w-10 h-10 rounded-full bg-[#FA2E6E] flex items-center justify-center text-white font-medium hover:opacity-90 transition-opacity shadow-md"
+                aria-label="Profile menu"
+              >
+                {profile?.photoURL ? (
+                  <img
+                    src={profile.photoURL}
+                    alt={profile?.name || user?.name || "User"}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <PersonIcon fontSize="medium" />
+                )}
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {isProfileMenuOpen && (
+                <div
+                  ref={profileMenuRef}
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-slideDown"
+                >
+                  {/* User Info Header */}
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {profile?.name || user?.name || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user?.email || ''}
+                    </p>
+                  </div>
+
+                  {/* Profile Option */}
+                  <button
+                    onClick={handleProfileClick}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <PersonIcon fontSize="small" className="text-gray-500" />
+                    <span>Profile</span>
+                  </button>
+
+                  {/* Admin Option - Only for admin users */}
+                  {isAdmin && (
+                    <button
+                      onClick={handleAdminClick}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <AdminPanelSettingsIcon fontSize="small" className="text-gray-500" />
+                      <span>Admin</span>
+                    </button>
+                  )}
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-100 my-1"></div>
+
+                  {/* Sign Out Option */}
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <LogoutIcon fontSize="small" className="text-red-500" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Featured Banner - Full width with negative margins on mobile */}
           <section className="">
@@ -101,7 +238,7 @@ const HomePage = () => {
           {sections.map((section, index) => (
             <section
               key={section.id}
-              className="animate-fadeIn"
+              className="animate-fadeIn cursor-pointer"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               <DynamicSection section={section} />
