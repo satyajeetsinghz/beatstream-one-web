@@ -101,7 +101,7 @@ const PlayerBar = () => {
     // Mobile version - seamless integration above mobile nav
     if (isMobile) {
         return (
-            <div className="fixed bottom-[69px] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
+            <div className="fixed bottom-[64px] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
                 {/* Main Player Bar - Apple Music style */}
                 <div className="px-3 py-2 flex items-center gap-2">
                     {/* Album Art */}

@@ -43,48 +43,40 @@ export const DynamicSection = ({ section }: Props) => {
     }
   };
 
-  // Don't render inactive sections
   if (!section.isActive) return null;
 
-  // Loading State - Show skeleton
   if (loading) {
     return (
-      <div className="mb-8 sm:mb-10 md:mb-12">
-        {/* Section Header Skeleton - Responsive */}
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
+      <div className="mb-8 animate-pulse">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-1 h-4 sm:h-5 bg-gray-200 rounded-full animate-pulse"></div>
-            <div className="h-5 sm:h-6 w-28 sm:w-40 bg-gray-200 rounded animate-pulse"></div>
+            <div className="w-1 h-5 bg-gray-200 rounded-full"></div>
+            <div className="h-5 w-32 bg-gray-200 rounded"></div>
           </div>
-          <div className="w-16 h-6 sm:w-20 sm:h-8 bg-gray-200 rounded-full animate-pulse"></div>
+          <div className="h-4 w-16 bg-gray-200 rounded"></div>
         </div>
-
-        {/* Horizontal Scroll Skeleton */}
-        <div className="relative">
-          <div className="flex gap-3 sm:gap-4 overflow-x-hidden">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-40 sm:w-44 md:w-48 animate-pulse">
-                <div className="aspect-square bg-gray-200 rounded-lg sm:rounded-xl mb-2"></div>
-                <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-                <div className="h-2 sm:h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
-          </div>
+        <div className="flex gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="w-[180px] flex-shrink-0">
+              <div className="aspect-square bg-gray-200 rounded-lg mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
+              <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  // Don't render if no songs
   if (!sectionSongs.length) return null;
 
   return (
-    <div className="mb-8 sm:mb-10 md:mb-12 group/section">
-      {/* Section Header with Apple Music styling - Responsive */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 mb-3 sm:mb-4">
+    <div className="mb-10 group/section">
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-4 px-1">
         <div className="flex items-center gap-2">
-          <div className="w-1 h-4 sm:h-5 bg-[#FA2E6E] rounded-full"></div>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+          <div className="w-1 h-5 bg-[#FA2E6E] rounded-full"></div>
+          <h2 className="text-lg font-semibold text-gray-900">
             {section.title}
           </h2>
           <span className="text-xs text-gray-400 ml-1">
@@ -92,22 +84,17 @@ export const DynamicSection = ({ section }: Props) => {
           </span>
         </div>
 
-        {/* View All Link - Responsive */}
         {sectionSongs.length > 8 && (
-          <button className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#FA2E6E] transition-colors self-start sm:self-auto group">
+          <button className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#FA2E6E] transition-colors">
             <span className="font-medium">View All</span>
-            <ChevronRightIcon 
-              fontSize="small" 
-              className="text-gray-400 group-hover:text-[#FA2E6E] transition-colors" 
-              sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }}
-            />
+            <ChevronRightIcon fontSize="small" />
           </button>
         )}
       </div>
 
-      {/* Horizontal Scroll Container with Navigation Buttons */}
+      {/* Horizontal Scroll Container */}
       <div className="relative">
-        {/* Left Navigation Button */}
+        {/* Left Arrow */}
         {showLeftArrow && (
           <button
             onClick={scrollLeft}
@@ -122,12 +109,12 @@ export const DynamicSection = ({ section }: Props) => {
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="overflow-x-auto scrollbar-hide scroll-smooth pb-4"
+          className="overflow-x-auto scrollbar-hide scroll-smooth pb-2"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          <div className="flex gap-3 sm:gap-4 md:gap-5" style={{ minWidth: 'min-content' }}>
+          <div className="flex sm:gap-2" style={{ minWidth: 'min-content' }}>
             {sectionSongs.slice(0, 12).map((song, index) => (
-              <div key={song.id} className="w-40 sm:w-44 md:w-48 flex-shrink-0">
+              <div key={song.id} className="w-[160px] sm:w-[180px] flex-shrink-0">
                 <SongCard
                   track={song}
                   songs={sectionSongs}
@@ -139,7 +126,7 @@ export const DynamicSection = ({ section }: Props) => {
           </div>
         </div>
 
-        {/* Right Navigation Button */}
+        {/* Right Arrow */}
         {showRightArrow && (
           <button
             onClick={scrollRight}
@@ -153,27 +140,23 @@ export const DynamicSection = ({ section }: Props) => {
 
       {/* Gradient fade indicators */}
       <div className="relative">
-        <div className="absolute left-0 top-0 bottom-4 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none"></div>
-        <div className="absolute right-0 top-0 bottom-4 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
+        <div className="absolute left-0 top-0 bottom-2 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none"></div>
+        <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
       </div>
 
-      {/* Show More Indicator - Only shows if there are more songs beyond what's shown */}
+      {/* Show More Indicator */}
       {sectionSongs.length > 12 && (
-        <div className="text-center mt-4">
+        <div className="text-center mt-3">
           <button className="text-xs text-gray-400 hover:text-[#FA2E6E] transition-colors group flex items-center justify-center gap-1 mx-auto">
             <span>+ {sectionSongs.length - 12} more songs</span>
-            <ChevronRightIcon 
-              fontSize="small" 
-              className="text-gray-400 group-hover:text-[#FA2E6E] transition-colors" 
-              sx={{ fontSize: '1rem' }}
-            />
+            <ChevronRightIcon fontSize="small" className="text-gray-400 group-hover:text-[#FA2E6E]" />
           </button>
         </div>
       )}
 
-      {/* Browse all link for larger sections */}
+      {/* Browse all link for desktop */}
       {!isMobile && sectionSongs.length > 16 && (
-        <div className="mt-4 text-right">
+        <div className="text-right mt-2">
           <button className="text-xs text-gray-400 hover:text-[#FA2E6E] transition-colors">
             Browse all {sectionSongs.length} songs
           </button>

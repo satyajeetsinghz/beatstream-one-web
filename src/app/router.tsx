@@ -10,7 +10,6 @@ import ProfilePage from "@/features/profile/ProfilePage";
 import ProtectedAdminRoute from "@/features/admin/components/ProtectedAdminRoute";
 import PlaylistPage from "@/features/playlists/pages/PlaylistPage";
 import LibraryPage from "@/components/LibraryPage";
-import JustinBieberSwagPlayer from "@/components/ui/JustinBieberSwagPlayer";
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -37,7 +36,7 @@ const router = createBrowserRouter([
       },
       {
         path: "search",
-        element: <JustinBieberSwagPlayer/>,
+        element: "",
       },
       {
         path: "library",

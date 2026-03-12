@@ -142,7 +142,7 @@ const RecentlyPlayed = () => {
           className="overflow-x-auto scrollbar-hide scroll-smooth pb-2"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          <div className="flex gap-3 sm:gap-4 md:gap-5 cursor-pointer" style={{ minWidth: 'min-content' }}>
+          <div className="flex w-[160px] sm:w-[180px] cursor-pointer" style={{ minWidth: 'min-content' }}>
             {historyTracks.map((track, index) => (
               <div key={track.id} className="w-40 sm:w-44 md:w-48 flex-shrink-0">
                 <SongCard
