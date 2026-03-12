@@ -201,7 +201,7 @@ const Sidebar = ({
 
           {/* Playlist List - Collapsible Section */}
           {isPlaylistExpanded && (
-            <div className="mt-4 px-2">
+            <div className="mt-1 px-2">
               <div className="max-h-48 overflow-y-auto scroll-smooth custom-scrollbar">
                 <PlaylistList />
               </div>

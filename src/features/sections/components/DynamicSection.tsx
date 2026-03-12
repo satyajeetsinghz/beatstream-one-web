@@ -79,9 +79,9 @@ export const DynamicSection = ({ section }: Props) => {
           <h2 className="text-lg font-semibold text-gray-900">
             {section.title}
           </h2>
-          <span className="text-xs text-gray-400 ml-1">
+          {/* <span className="text-xs text-gray-400 ml-1">
             {sectionSongs.length} {sectionSongs.length === 1 ? 'song' : 'songs'}
-          </span>
+          </span> */}
         </div>
 
         {sectionSongs.length > 8 && (
@@ -112,9 +112,9 @@ export const DynamicSection = ({ section }: Props) => {
           className="overflow-x-auto scrollbar-hide scroll-smooth pb-2"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          <div className="flex sm:gap-2" style={{ minWidth: 'min-content' }}>
+          <div className="flex gap-2 sm:gap-4" style={{ minWidth: 'min-content' }}>
             {sectionSongs.slice(0, 12).map((song, index) => (
-              <div key={song.id} className="w-[160px] sm:w-[180px] flex-shrink-0">
+              <div key={song.id} className="w-[140px] sm:w-[172px] flex-shrink-0">
                 <SongCard
                   track={song}
                   songs={sectionSongs}

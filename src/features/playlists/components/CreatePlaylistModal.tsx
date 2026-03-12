@@ -1,225 +1,265 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { createPlaylist } from "../services/playlistService";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import CloseIcon from "@mui/icons-material/Close";
-import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
-import { useResponsive } from "@/components/layout/hooks/useResponsive";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
     open: boolean;
     onClose: () => void;
 }
 
+// ─── Component ────────────────────────────────────────────────────────────────
 const CreatePlaylistModal = ({ open, onClose }: Props) => {
     const { user } = useAuth();
     const [name, setName] = useState("");
     const [loading, setLoading] = useState(false);
-    const modalRef = useRef<HTMLDivElement>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const backdropRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const { isMobile } = useResponsive();
 
-    /* ---------------- CLOSE HANDLERS ---------------- */
-
-    const handleClose = () => {
-        if (loading) return;
-        setName("");
-        onClose();
-    };
-
-    // Click outside to close
+    // ── Reset state on open/close ─────────────────────────────────────────────
     useEffect(() => {
+        // Early return if modal is closed
         if (!open) return;
 
-        const handleClickOutside = (e: MouseEvent) => {
-            if (
-                modalRef.current &&
-                !modalRef.current.contains(e.target as Node)
-            ) {
-                handleClose();
+        let isMounted = true;
+
+        // Reset form state when modal opens
+        const resetForm = () => {
+            setName("");
+            setError(null);
+        };
+
+        resetForm();
+
+        // Focus input after animation completes
+        const focusTimeout = setTimeout(() => {
+            // Check if component is still mounted and input exists
+            if (isMounted && inputRef.current) {
+                inputRef.current.focus();
             }
-        };
+        }, 120);
 
-        document.addEventListener("mousedown", handleClickOutside);
+        // Cleanup function
         return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
+            isMounted = false;
+            clearTimeout(focusTimeout);
         };
-    }, [open, handleClose]);
+    }, [open, setName, setError]);
 
-    // Escape key to close
+    // ── Escape key ────────────────────────────────────────────────────────────
     useEffect(() => {
         if (!open) return;
-
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
-                handleClose();
-            }
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && !loading) handleClose();
         };
+        document.addEventListener("keydown", handler);
+        return () => document.removeEventListener("keydown", handler);
+    }, [open, loading]);
 
-        document.addEventListener("keydown", handleEsc);
-        return () => {
-            document.removeEventListener("keydown", handleEsc);
-        };
-    }, [open, handleClose]);
-
-    // Focus input when modal opens
+    // ── Body scroll lock ──────────────────────────────────────────────────────
     useEffect(() => {
-        if (open && inputRef.current) {
-            setTimeout(() => {
-                inputRef.current?.focus();
-            }, 100);
+        if (open) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "";
         }
+        return () => { document.body.style.overflow = ""; };
     }, [open]);
 
-    // Early return AFTER all hooks
-    if (!open) return null;
+    // ── Handlers ──────────────────────────────────────────────────────────────
+    const handleClose = useCallback(() => {
+        if (loading) return;
+        onClose();
+    }, [loading, onClose]);
 
-    /* ---------------- CREATE ---------------- */
+    const handleBackdropClick = useCallback(
+        (e: React.MouseEvent<HTMLDivElement>) => {
+            if (e.target === backdropRef.current) handleClose();
+        },
+        [handleClose]
+    );
 
-    const handleCreate = async () => {
-        if (!user || !name.trim() || loading) return;
+    const handleCreate = useCallback(async () => {
+        const trimmed = name.trim();
+        if (!user || !trimmed || loading) return;
+
+        setError(null);
+        setLoading(true);
 
         try {
-            setLoading(true);
-            await createPlaylist(user.uid, name.trim());
-            setName("");
+            await createPlaylist(user.uid, trimmed);
             onClose();
-        } catch (error) {
-            console.error("Failed to create playlist:", error);
+        } catch (err) {
+            console.error("[CreatePlaylistModal] Failed to create playlist:", err);
+            setError("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }
-    };
+    }, [user, name, loading, onClose]);
 
-    /* Submit on Enter */
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") {
-            handleCreate();
-        }
-    };
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === "Enter") handleCreate();
+        },
+        [handleCreate]
+    );
 
-    /* ---------------- UI ---------------- */
+    // ── Don't render ──────────────────────────────────────────────────────────
+    if (!open) return null;
 
-    return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+    const isValid = name.trim().length > 0;
+
+    // ── Portal ────────────────────────────────────────────────────────────────
+    return createPortal(
+        <>
+            <style>{`
+                @keyframes backdropIn {
+                    from { opacity: 0; }
+                    to   { opacity: 1; }
+                }
+                @keyframes sheetUp {
+                    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+                    to   { opacity: 1; transform: translateY(0)    scale(1); }
+                }
+            `}</style>
+
+            {/* Backdrop */}
             <div
-                ref={modalRef}
-                className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-[95%] xs:max-w-sm sm:max-w-md mx-auto overflow-hidden animate-fadeIn"
-                style={{ maxHeight: '90vh' }}
+                ref={backdropRef}
+                onClick={handleBackdropClick}
+                className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-4"
+                style={{
+                    background: "rgba(0, 0, 0, 0.5)", // Almost solid white
+                    animation: "backdropIn 0.2s ease",
+                }}
             >
-                {/* Header - Responsive */}
-                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#FA2E6E]/10 rounded-full flex items-center justify-center">
-                            <PlaylistAddIcon className="text-[#FA2E6E]" fontSize="small" />
-                        </div>
-                        <h2 className="text-base sm:text-xl font-semibold text-gray-900">
-                            Create Playlist
+                {/* Sheet */}
+                <div
+                    className="relative w-[280px] sm:max-w-sm rounded-lg overflow-hidden"
+                    style={{
+                        background: "rgba(255, 255, 255, 1)",
+                        backdropFilter: "blur(48px) saturate(180%)",
+                        WebkitBackdropFilter: "blur(48px) saturate(180%)",
+                        border: "1px solid rgba(255,255,255,0.8)",
+                        boxShadow: "0 32px 80px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.08)",
+                        animation: "sheetUp 0.28s cubic-bezier(0.34,1.3,0.64,1)",
+                    }}
+                >
+                    {/* ── Drag handle — mobile only ── */}
+                    <div className="flex justify-center pt-3 pb-1 sm:hidden">
+                        <div className="w-9 h-[5px] rounded-full bg-black/20" />
+                    </div>
+
+                    {/* ── Header ── */}
+                    <div className="px-5 pt-5 sm:pt-6 pb-4 text-start border-b border-black/[0.06]">
+                        {/* Icon */}
+                        {/* <div className="mx-auto mb-3.5 w-14 h-14 rounded-2xl flex items-center justify-center"
+                            style={{
+                                background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)",
+                                boxShadow: "0 8px 24px rgba(255,55,95,0.25)",
+                            }}
+                        >
+                            <MusicNoteIcon sx={{ fontSize: 26 }} className="text-white" />
+                        </div> */}
+
+                        <h2
+                            className="text-lg font-semibold tracking-normal text-neutral-800"
+                        >
+                            New Playlist
                         </h2>
-                    </div>
+                        <p className="text-[12.5px] text-neutral-900/40 mt-0.5 tracking-[-0.1px]">
 
-                    <button
-                        onClick={handleClose}
-                        disabled={loading}
-                        className="p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50"
-                        aria-label="Close"
-                    >
-                        <CloseIcon className="text-gray-500" fontSize={isMobile ? "small" : "medium"} />
-                    </button>
-                </div>
-
-                {/* Content - Responsive */}
-                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto">
-                    {/* Icon Preview - Responsive */}
-                    <div className="flex justify-center">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gradient-to-br from-[#FA2E6E] to-purple-500 rounded-xl sm:rounded-2xl shadow-lg flex items-center justify-center">
-                            <LibraryMusicIcon 
-                                className="text-white" 
-                                sx={{ fontSize: { xs: 28, sm: 32, md: 40 } }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Input Section */}
-                    <div>
-                        <label className="block text-[10px] sm:text-xs font-medium text-gray-500 mb-1 sm:mb-2">
-                            Playlist Name
-                        </label>
-
-                        <div className="relative">
-                            <input
-                                ref={inputRef}
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder="e.g., My Favorite Songs"
-                                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-200 rounded-lg sm:rounded-xl text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FA2E6E]/20 focus:border-[#FA2E6E] transition-colors"
-                                maxLength={50}
-                                disabled={loading}
-                            />
-                            
-                            {/* Character count indicator */}
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                <span className="text-[10px] sm:text-xs text-gray-400">
-                                    {name.length}/50
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Info Cards - Responsive Grid */}
-                    <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-2">
-                        <div className="bg-gray-50 rounded-lg p-2 sm:p-3 text-center">
-                            <p className="text-[10px] sm:text-xs text-gray-500">Privacy</p>
-                            <p className="text-xs sm:text-sm font-medium text-gray-900">Private</p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-2 sm:p-3 text-center">
-                            <p className="text-[10px] sm:text-xs text-gray-500">Tracks</p>
-                            <p className="text-xs sm:text-sm font-medium text-gray-900">0 songs</p>
-                        </div>
-                    </div>
-
-                    {/* Help Text */}
-                    <div className="flex items-start gap-2 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                        <span className="w-4 h-4 sm:w-5 sm:h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span className="text-white text-[8px] sm:text-[10px] font-bold">i</span>
-                        </span>
-                        <p className="text-[10px] sm:text-xs text-blue-700">
-                            Your playlist will be private until you share it with others
                         </p>
                     </div>
-                </div>
 
-                {/* Footer - Responsive */}
-                <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50/50">
-                    <button
-                        onClick={handleClose}
-                        disabled={loading}
-                        className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors border border-gray-200 rounded-full hover:bg-gray-100 disabled:opacity-50"
-                    >
-                        Cancel
-                    </button>
+                    {/* ── Input ── */}
+                    <div className="px-5 py-2.5">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={name}
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                if (error) setError(null);
+                            }}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Playlist Title"
+                            maxLength={50}
+                            disabled={loading}
+                            className="w-full bg-neutral-50 rounded-md px-4 py-2 text-sm tracking-wide font-medium text-neutral-800/70 placeholder-neutral-800/70 outline-none transition-all duration-200 disabled:opacity-50"
+                            style={{
+                                fontFamily: "-apple-system, 'SF Pro Text', sans-serif",
+                                letterSpacing: "-0.1px",
+                                border: error
+                                    ? "1.5px solid rgba(255,59,48,0.5)"
+                                    : isValid
+                                        ? "1.5px solid rgba(255,55,95,0.4)"
+                                        : "1.5px solid rgba(0,0,0,0.06)",
+                                caretColor: "#ff375f",
+                            }}
+                            aria-label="Playlist Title"
+                        />
 
-                    <button
-                        onClick={handleCreate}
-                        disabled={!name.trim() || loading}
-                        className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium bg-[#FA2E6E] text-white rounded-full hover:bg-[#E01E5A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        {/* Error or char count */}
+                        <div className="flex justify-between mt-2 px-0.5 h-4">
+                            {error ? (
+                                <p className="text-[11px] text-[#ff3b30]">{error}</p>
+                            ) : (
+                                <span />
+                            )}
+                            <p
+                                className="text-[11px] ml-auto"
+                                style={{ color: name.length > 42 ? "#ff9f0a" : "rgba(0,0,0,0.25)" }}
+                            >
+                                {name.length}/50
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* ── Actions ── */}
+                    <div
+                        className="flex p-4 gap-2 bg-neutral-100/90"
                     >
-                        {loading ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                <span>Creating...</span>
-                            </>
-                        ) : (
-                            <>
-                                <PlaylistAddIcon fontSize="small" />
-                                <span>Create Playlist</span>
-                            </>
-                        )}
-                    </button>
+                        {/* Cancel */}
+                        <button
+                            onClick={handleClose}
+                            disabled={loading}
+                            className="w-full text-sm py-1 rounded-md text-neutral-700 hover:text-neutral-500 bg-white font-medium active:bg-black/[0.04] transition-colors duration-100 disabled:opacity-40"
+                        >
+                            Cancel
+                        </button>
+
+                        {/* Divider */}
+                        {/* <div className="bg-black/[0.06]" /> */}
+
+                        {/* Create */}
+                        <button
+                            onClick={handleCreate}
+                            disabled={!isValid || loading}
+                            className="w-full text-sm py-1 rounded-md text-neutral-50 hover:text-neutral-50 bg-[#ff375f] hover:bg-[#c50027] font-medium transition-colors duration-100 disabled:opacity-40"
+                            style={{
+                                color: isValid && !loading ? "#fff" : "fff",
+                            }}
+                        >
+                            {loading ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <span
+                                        className="w-4 h-4 rounded-full border-2 border-[#ff375f]/20 border-t-[#ff375f] animate-spin inline-block"
+                                    />
+                                    Creating
+                                </span>
+                            ) : (
+                                "Create"
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>,
+        document.body
     );
 };
 

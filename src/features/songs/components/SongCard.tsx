@@ -371,7 +371,7 @@ const SongCard = memo(({
     if (variant === 'default') {
         return (
             <div
-                className="relative w-[140px] sm:w-[172px] select-none mx-auto"
+                className="relative w-[140px] sm:w-[172px] select-none"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
@@ -413,7 +413,7 @@ const SongCard = memo(({
                     >
                         <PlayCircleRoundedIcon
                             sx={{
-                                fontSize: {xs:28, sm:34},
+                                fontSize: { xs: 28, sm: 34 },
                                 color: '#fff',
                                 transition: 'color 0.2s ease',
                                 '&:hover': {

@@ -1,312 +1,386 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserPlaylists } from "@/features/playlists/hooks/useUserPlaylist";
 import { useLikedSongs } from "@/features/likes/hooks/useLikedSongs";
-import LibraryMusicIcon from '@mui/icons-material/LibraryMusic';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import AddIcon from '@mui/icons-material/Add';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import CreatePlaylistModal from "@/features/playlists/components/CreatePlaylistModal";
 import { useResponsive } from "@/components/layout/hooks/useResponsive";
-import PlaylistCard from "@/features/playlists/components/PlaylistCard";
-import ExplicitIcon from '@mui/icons-material/Explicit';
-import { ChevronLeftRounded } from "@mui/icons-material";
+import CreatePlaylistModal from "@/features/playlists/components/CreatePlaylistModal";
+// import PlaylistCard from "@/features/playlists/components/PlaylistCard";
 
+// ─── MUI Icons ────────────────────────────────────────────────────────────────
+import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
+import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
+import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import MusicNoteRoundedIcon from "@mui/icons-material/MusicNoteRounded";
+import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
+import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
+import LinearProgress from "@mui/material/LinearProgress";
+
+// ─── Shared: Playlist Cover ───────────────────────────────────────────────────
+const PlaylistCover = ({
+  coverURL,
+  name,
+  className = "",
+}: {
+  coverURL?: string;
+  name: string;
+  className?: string;
+}) => (
+  <div className={`overflow-hidden rounded-lg shadow-sm shrink-0 ${className}`}>
+    {coverURL ? (
+      <img src={coverURL} alt={name} className="w-full h-full object-cover" />
+    ) : (
+      <div
+        className="w-full h-full flex items-center justify-center"
+        style={{ background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)" }}
+      >
+        <MusicNoteRoundedIcon className="text-white/80" sx={{ fontSize: "40%" }} />
+      </div>
+    )}
+  </div>
+);
+
+// ─── Shared: Skeleton ─────────────────────────────────────────────────────────
+const Skeleton = ({ className = "" }: { className?: string }) => (
+  <div className={`rounded-lg animate-pulse bg-gray-200 ${className}`} />
+);
+
+// ─── Shared: Section Header ───────────────────────────────────────────────────
+const SectionHeader = ({
+  title,
+  count,
+  right,
+}: {
+  title: string;
+  count?: number;
+  right?: React.ReactNode;
+}) => (
+  <div className="flex items-center justify-between mb-5">
+    <div className="flex items-center gap-2">
+      <h2 className="text-xl font-semibold text-gray-900 tracking-tight">
+        {title}
+      </h2>
+      {count !== undefined && (
+        <span className="text-xs text-gray-400 font-medium ml-1">{count}</span>
+      )}
+    </div>
+    {right}
+  </div>
+);
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 const LibraryPage = () => {
   const { playlists, loading: playlistsLoading } = useUserPlaylists();
   const { likedSongs, loading: likedLoading } = useLikedSongs();
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const { isMobile } = useResponsive();
   const navigate = useNavigate();
 
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // Calculate total liked songs count
-  const likedSongsCount = likedSongs?.length || 0;
+  const likedCount = likedSongs?.length ?? 0;
+  const openModal = useCallback(() => setShowCreateModal(true), []);
+  const closeModal = useCallback(() => setShowCreateModal(false), []);
 
-  // Calculate total playlists count
-  const totalPlaylists = playlists.length;
+  const formatDate = (createdAt: any) => {
+    try {
+      const date = createdAt?.toDate?.() ?? new Date(createdAt);
+      return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    } catch {
+      return null;
+    }
+  };
 
-  // Only render mobile version, otherwise show desktop version
-  if (!isMobile) {
-    return (
-      <div className="min-h-screen bg-white text-gray-900 px-4 sm:px-6 md:px-8 py-6 md:py-10">
-
-        <div className="flex justify-between items-center mb-4">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
-          >
-            <div className="">
-              <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
-            </div>
-            <h1 className="text-lg font-semibold text-[#FA2E6E]">Library</h1>
-            {/* <span className="text-xs">Back</span> */}
-          </button>
-        </div>
-
-        {/* Header */}
-        <div className="flex flex-col md:flex-row gap-6 md:gap-10 mb-8">
-          {/* Library Cover */}
-          <div className="relative w-40 h-40 sm:w-56 sm:h-56 mx-auto md:mx-0 bg-gradient-to-br from-[#FA2E6E] to-purple-400 rounded-md shadow-xl overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center">
-              <LibraryMusicIcon className="text-white" sx={{ fontSize: { xs: 60, md: 80, lg: 100 } }} />
-            </div>
-          </div>
-
-          {/* Library Info */}
-          <div className="flex-1 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center gap-3 justify-center md:justify-start">
-                <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-700">Your Library</h1>
-                <ExplicitIcon className="text-gray-400" fontSize="small" />
-              </div>
-
-              <h2 className="text-[#FA2E6E] text-xl sm:text-2xl mt-0.5 font-medium text-center md:text-left">
-                {playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}
-              </h2>
-
-              <div className="text-xs sm:text-sm text-gray-500 mt-2 flex flex-wrap items-center justify-center md:justify-start gap-2">
-                <span>{playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}</span>
-                <span className="w-1 h-1 rounded-full bg-gray-300" />
-                <span>{likedSongsCount} liked {likedSongsCount === 1 ? 'song' : 'songs'}</span>
-                <span className="w-1 h-1 rounded-full bg-gray-300" />
-                <span>{new Date().getFullYear()}</span>
-              </div>
-
-              <p className="text-gray-500 text-xs sm:text-sm mt-4 max-w-xl leading-relaxed text-center md:text-left">
-                Your personal music collection. Create playlists, save your favorite tracks,
-                and organize your music library exactly how you want it.
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-6 sm:mt-7">
-                {/* <Link
-                  to="/liked"
-                  className="bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-3 py-1.5 rounded-md font-medium flex items-center gap-0.5 text-sm shadow-sm"
-                >
-                  <FavoriteIcon fontSize="small" /> <span className="text-sm">Liked Songs</span>
-                </Link> */}
-
-                <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-3 py-1.5 rounded-md font-medium flex items-center gap-0.5 text-sm shadow-sm"
-                >
-                  <AddIcon fontSize="small" /> <span className="text-sm">New Playlist</span>
-                </button>
-
-                {/* <button className="ml-auto hidden sm:block text-[#FA2E6E] hover:text-[#E01E5A] font-medium text-sm sm:text-base">
-                  <AddIcon fontSize="small" className="inline mr-1" /> Add
-                </button> */}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Playlists Grid */}
-        <div className="mt-8">
-          <div className="flex items-center gap-3 mb-4">
-            <h2 className="text-lg font-semibold text-neutral-700">Your Playlists</h2>
-            <span className="text-xs text-gray-400">{totalPlaylists} total</span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {/* Liked Songs Card - Matching style */}
-            <Link
-              to="/liked"
-              className="group relative bg-white rounded-md overflow-hidden shadow-md hover:shadow-lg transition-all duration-200"
-            >
-              <div className="relative aspect-square bg-gradient-to-br from-[#FA2E6E] to-purple-400 flex items-center justify-center">
-                <FavoriteIcon className="text-white" sx={{ fontSize: 48 }} />
-                {likedLoading ? (
-                  <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                    Loading...
-                  </div>
-                ) : (
-                  <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
-                    {likedSongsCount} {likedSongsCount === 1 ? 'song' : 'songs'}
-                  </div>
-                )}
-              </div>
-              <div className="p-3">
-                <h3 className="font-medium text-neutral-700 text-sm truncate">Liked Songs</h3>
-                <p className="text-xs text-gray-400">Your favorite tracks</p>
-              </div>
-            </Link>
-
-            {/* Playlist Cards */}
-            {playlistsLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="animate-pulse">
-                  <div className="aspect-square bg-gray-200 rounded-md mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              ))
-            ) : (
-              playlists.map((playlist) => (
-                <PlaylistCard key={playlist.id} playlist={playlist} />
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Create Playlist Modal */}
-        <CreatePlaylistModal
-          open={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-        />
-      </div>
-    );
-  }
-
-  // Mobile Version
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      {/* Header - Sticky */}
-      {/* <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 z-10 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold text-neutral-700">Library</h1>
-            <ExplicitIcon className="text-gray-400" fontSize="small" />
-          </div>
-          
-        </div>
-      </div> */}
+    <div className="min-h-screen bg-white">
+      <style>{`
+                @keyframes fadeUp {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .fade-up { animation: fadeUp 0.3s ease forwards; }
+                .card-hover {
+                    transition: transform 0.2s ease;
+                }
+                .card-hover:hover {
+                    transform: scale(1.02);
+                }
+                .row-hover {
+                    transition: background-color 0.2s ease;
+                }
+                .row-hover:hover {
+                    background-color: #f5f5f7;
+                }
+            `}</style>
 
-
-      <div className="flex justify-between items-center mt-6 mb-4 px-4">
-        {/* Back Button */}
+      {/* ── Nav bar ── */}
+      <div className="flex items-center justify-between px-4 sm:px-6 md:px-8 py-6 sm:py-10 bg-white/80 backdrop-blur">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-0 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
+          className="flex items-center gap-1 text-[#ff375f] hover:text-[#e01e5a] transition-colors"
         >
-          <div className="">
-            <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
-          </div>
-          {/* <span className="text-xs">Back</span> */}
-          <h1 className="text-lg font-semibold text-[#FA2E6E]">Library</h1>
+          <ChevronLeftRoundedIcon fontSize="large" />
+
+          <span className="text-lg font-semibold">Library</span>
         </button>
+
         <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex justify-center items-center gap-0.5 text-[#E01E5A] text-sm font-medium"
+          onClick={openModal}
+          className="flex items-center gap-0.5 text-[#ff375f] hover:text-[#e01e5a] transition-colors"
         >
-          <AddIcon fontSize="small" />
-          <span className="text-xs font-semibold">Create Playlist</span>
+          <AddRoundedIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
+          <span className="text-sm font-semibold">Add Playlist</span>
         </button>
       </div>
 
-      {/* Content */}
-      <div className="px-4 py-4 space-y-6">
-        {/* Library Cover - Mobile */}
-        <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-md mt-2">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#FA2E6E] to-purple-400 rounded-md flex items-center justify-center shadow-sm">
-            <LibraryMusicIcon className="text-white" fontSize="medium" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-medium text-neutral-700">Your Library</h2>
-            <p className="text-xs text-gray-500">{playlists.length} playlists • {likedSongsCount} liked songs</p>
+      <div className="px-4 sm:px-6 md:px-8 lg:px-10 pb-32">
+
+        {/* ── Hero header ── */}
+        <div className="pt-8 pb-8 fade-up">
+          <div className={`flex relative ${isMobile ? "flex-col items-center text-center" : "flex-row items-center"} gap-6`}>
+
+            {/* Big cover art */}
+            <div
+              className="shrink-0 rounded-md overflow-hidden shadow-xl"
+              style={{
+                width: isMobile ? 140 : 180,
+                height: isMobile ? 140 : 180,
+                background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)",
+              }}
+            >
+              <div className="w-full h-full flex items-center justify-center">
+                <LibraryMusicIcon
+                  className="text-white/80"
+                  sx={{ fontSize: isMobile ? 56 : 72 }}
+                />
+              </div>
+            </div>
+
+            {/* Text */}
+            <div className={isMobile ? "" : "mb-1"}>
+              {/* <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">
+                Library
+              </p> */}
+              <div className={isMobile ? "" : "absolute top-5"}>
+                <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight mb-2">
+                  Your Library
+                </h1>
+
+                {/* Meta row */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start ml-1 gap-2 text-sm text-gray-500">
+                  <span>{playlists.length} {playlists.length === 1 ? "playlist" : "playlists"}</span>
+                  <span className="w-1 h-1 rounded-full bg-gray-300" />
+                  <span>{likedCount} liked {likedCount === 1 ? "song" : "songs"}</span>
+                </div>
+              </div>
+
+              {/* CTA buttons */}
+              {!isMobile && (
+                <div className="flex items-center gap-3 mb-1 absolute bottom-0">
+                  <button
+                    onClick={openModal}
+                    className="bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-3 py-1.5 rounded-md font-medium flex items-center gap-0.5 text-sm shadow-sm"
+                  >
+                    <AddRoundedIcon sx={{ fontSize: 18 }} />
+                    New Playlist
+                  </button>
+                  {/* <Link
+                    to="/liked"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    <FavoriteRoundedIcon sx={{ fontSize: 16 }} className="text-[#ff375f]" />
+                    Liked Songs
+                  </Link> */}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Quick Access Section */}
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500 mb-2 px-1">Quick Access</h2>
-          <div className="space-y-2">
-            {/* Liked Songs */}
-            <Link
-              to="/liked"
-              className="flex items-center gap-4 p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors"
+        {/* ── Liked Songs pinned card ── */}
+        <div className="fade-up mb-8">
+          <Link
+            to="/liked"
+            className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
+          >
+            {/* Gradient thumb */}
+            <div
+              className="w-14 h-14 rounded-lg shrink-0 flex items-center justify-center shadow-sm"
+              style={{
+                background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)",
+              }}
             >
-              <div className="w-12 h-12 rounded-md bg-gradient-to-br from-[#FA2E6E] to-purple-400 flex items-center justify-center shadow-sm">
-                <FavoriteIcon className="text-white" fontSize="small" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-neutral-700">Liked Songs</h3>
-                <p className="text-xs text-gray-500">
-                  {likedLoading ? (
-                    <span className="inline-block w-16 h-3 bg-gray-200 rounded animate-pulse"></span>
-                  ) : (
-                    `${likedSongsCount} ${likedSongsCount === 1 ? 'song' : 'songs'}`
-                  )}
-                </p>
-              </div>
-              <ChevronRightIcon className="text-gray-400" fontSize="small" />
-            </Link>
-          </div>
-        </section>
-
-        {/* Playlists Section */}
-        <section>
-          <div className="flex items-center justify-between mb-2 px-1">
-            <h2 className="text-sm font-semibold text-gray-500">Your Playlists</h2>
-            <span className="text-xs text-gray-400">{playlists.length} total</span>
-          </div>
-
-          {playlistsLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
-                  <div className="w-12 h-12 bg-gray-200 rounded-md"></div>
-                  <div className="flex-1">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                </div>
-              ))}
+              <FavoriteRoundedIcon className="text-white" sx={{ fontSize: 24 }} />
             </div>
-          ) : playlists.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-md">
-              <div className="w-16 h-16 mx-auto mb-3 bg-gray-200 rounded-full flex items-center justify-center">
-                <LibraryMusicIcon className="text-gray-400" fontSize="large" />
+
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">
+                Liked Songs
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">
+  {likedLoading ? (
+    <div className="w-16">
+      <LinearProgress 
+        sx={{ 
+          height: 3, 
+          borderRadius: 1.5,
+          bgcolor: 'rgba(0,0,0,0.1)',
+          '& .MuiLinearProgress-bar': {
+            bgcolor: 'rgba(0,0,0,0.3)',
+          }
+        }} 
+      />
+    </div>
+  ) : (
+    `${likedCount} ${likedCount === 1 ? "song" : "songs"}`
+  )}
+</p>
+            </div>
+
+            <ChevronRightRoundedIcon className="text-gray-400 shrink-0" sx={{ fontSize: 18 }} />
+          </Link>
+        </div>
+
+        {/* ── Playlists section ── */}
+        <div className="fade-up">
+          <SectionHeader
+            title="Your Playlists"
+            // count={playlists.length}
+            right={
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-white shadow-sm" : "hover:bg-gray-200"
+                    }`}
+                  aria-label="Grid view"
+                >
+                  <GridViewRoundedIcon
+                    sx={{ fontSize: 18 }}
+                    className={viewMode === "grid" ? "text-gray-700" : "text-gray-400"}
+                  />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-white shadow-sm" : "hover:bg-gray-200"
+                    }`}
+                  aria-label="List view"
+                >
+                  <ViewListRoundedIcon
+                    sx={{ fontSize: 18 }}
+                    className={viewMode === "list" ? "text-gray-700" : "text-gray-400"}
+                  />
+                </button>
               </div>
-              <h3 className="text-sm font-medium text-neutral-700 mb-1">No playlists yet</h3>
-              <p className="text-xs text-gray-500 mb-4">Create your first playlist</p>
+            }
+          />
+
+          {/* ── Loading ── */}
+          {playlistsLoading && (
+            viewMode === "grid" ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} style={{ animationDelay: `${i * 40}ms` }} className="fade-up">
+                    <Skeleton className="aspect-square w-full mb-2" />
+                    <Skeleton className="h-4 w-3/4 mb-1" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 p-2 animate-pulse">
+                    <Skeleton className="w-10 h-10 shrink-0" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-2/3 mb-1" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+
+          {/* ── Empty state ── */}
+          {!playlistsLoading && playlists.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center mb-4">
+                <LibraryMusicIcon className="text-gray-400" sx={{ fontSize: 36 }} />
+              </div>
+              <h3 className="text-base font-semibold text-gray-900 mb-1">No playlists yet</h3>
+              <p className="text-sm text-gray-500 mb-6 text-center">
+                Create your first playlist to start organizing your music
+              </p>
               <button
-                onClick={() => setShowCreateModal(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#FA2E6E] text-white text-xs font-medium rounded-md hover:bg-[#E01E5A] transition-colors"
+                onClick={openModal}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-[#ff375f] hover:bg-[#e01e5a] transition-colors shadow-sm"
               >
-                <AddIcon fontSize="small" />
-                <span>Create Playlist</span>
+                <AddRoundedIcon sx={{ fontSize: 18 }} />
+                New Playlist
               </button>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {playlists.map((playlist) => (
+          )}
+
+          {/* ── Grid view ── */}
+          {!playlistsLoading && playlists.length > 0 && viewMode === "grid" && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {playlists.map((playlist, i) => (
                 <Link
                   key={playlist.id}
                   to={`/playlist/${playlist.id}`}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors"
+                  className="group card-hover fade-up"
+                  style={{ animationDelay: `${i * 35}ms` }}
                 >
-                  <div className="w-12 h-12 rounded-md overflow-hidden flex-shrink-0 shadow-sm">
-                    {playlist.coverURL ? (
-                      <img
-                        src={playlist.coverURL}
-                        alt={playlist.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-[#FA2E6E] to-purple-400 flex items-center justify-center">
-                        <LibraryMusicIcon className="text-white opacity-70" fontSize="small" />
-                      </div>
-                    )}
+                  <div className="relative">
+                    <PlaylistCover
+                      coverURL={playlist.coverURL}
+                      name={playlist.name}
+                      className="aspect-square w-full mb-2 shadow-sm transition-all duration-300 group-hover:backdrop-blur-sm group-hover:brightness-75"
+                    />
+                    {/* Optional: Add a dark overlay for more contrast */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 rounded-lg pointer-events-none" />
                   </div>
 
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {playlist.name}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">
+                    {playlist.songCount ?? 0} {playlist.songCount === 1 ? "song" : "songs"}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* ── List view ── */}
+          {!playlistsLoading && playlists.length > 0 && viewMode === "list" && (
+            <div className="space-y-1">
+              {playlists.map((playlist, i) => (
+                <Link
+                  key={playlist.id}
+                  to={`/playlist/${playlist.id}`}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg row-hover fade-up"
+                  style={{ animationDelay: `${i * 30}ms` }}
+                >
+                  <PlaylistCover
+                    coverURL={playlist.coverURL}
+                    name={playlist.name}
+                    className="w-10 h-10 shrink-0"
+                  />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-neutral-700 text-sm truncate">{playlist.name}</h3>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <span>{playlist.songCount || 0} {playlist.songCount === 1 ? 'song' : 'songs'}</span>
-                      {playlist.createdAt && (
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {playlist.name}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                      <span>{playlist.songCount ?? 0} {playlist.songCount === 1 ? "song" : "songs"}</span>
+                      {formatDate(playlist.createdAt) && (
                         <>
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
-                          <span>
-                            {new Date(
-                              playlist.createdAt?.toDate?.() || playlist.createdAt
-                            ).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
+                          <span>{formatDate(playlist.createdAt)}</span>
                         </>
                       )}
-                      {!playlist.isPublic && (
+                      {playlist.isPublic === false && (
                         <>
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
                           <span>Private</span>
@@ -314,20 +388,28 @@ const LibraryPage = () => {
                       )}
                     </div>
                   </div>
-
-                  <ChevronRightIcon className="text-gray-400" fontSize="small" />
+                  <ChevronRightRoundedIcon className="text-gray-400 shrink-0" sx={{ fontSize: 18 }} />
                 </Link>
               ))}
             </div>
           )}
-        </section>
+        </div>
 
-        {/* Create Playlist Modal */}
-        <CreatePlaylistModal
-          open={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-        />
+        {/* ── Mobile: fixed bottom bar ── */}
+        {/* {isMobile && (
+                    <div className="fixed bottom-20 left-0 right-0 z-40 p-4 bg-gradient-to-t from-white via-white to-transparent">
+                        <button
+                            onClick={openModal}
+                            className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-sm font-semibold text-white bg-[#ff375f] hover:bg-[#e01e5a] transition-colors shadow-md"
+                        >
+                            <AddRoundedIcon sx={{ fontSize: 20 }} />
+                            New Playlist
+                        </button>
+                    </div>
+                )} */}
       </div>
+
+      <CreatePlaylistModal open={showCreateModal} onClose={closeModal} />
     </div>
   );
 };

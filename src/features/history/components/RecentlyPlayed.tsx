@@ -1,7 +1,7 @@
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useHistory } from "../hooks/useHistory";
 import SongCard from "@/features/songs/components/SongCard";
-import HistoryIcon from '@mui/icons-material/History';
+// import HistoryIcon from '@mui/icons-material/History';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { clearHistory } from "../services/historyService";
@@ -93,33 +93,34 @@ const RecentlyPlayed = () => {
   return (
     <div className="w-full group/recent">
       {/* Header with Apple Music styling - Responsive */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="flex flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex flex-wrap items-center gap-2">
           <div className="w-1 h-4 sm:h-5 bg-[#FA2E6E] rounded-full"></div>
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recently Played</h2>
-          <span className="text-xs text-gray-400">
+          {/* <span className="text-xs text-gray-400">
             {historyTracks.length} {historyTracks.length === 1 ? 'song' : 'songs'}
-          </span>
+          </span> */}
+        </div>
 
+        <div className=" sm:mr-2">
           {/* Clear All Button - Responsive */}
           {historyTracks.length > 0 && (
             <button
               onClick={handleClearHistory}
               disabled={clearing}
-              className={`ml-0 sm:ml-2 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-md hover:bg-[#FA2E6E] whitespace-nowrap ${
-                clearing ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`ml-0 sm:ml-2 text-xs text-gray-500/80 hover:text-white transition-colors px-2 py-1 rounded-md bg-slate-100 hover:bg-[#FA2E6E] whitespace-nowrap ${clearing ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
-              {clearing ? 'Clearing...' : 'Clear All'}
+              {clearing ? 'Removing...' : 'Remove History'}
             </button>
           )}
         </div>
 
         {/* History indicator - Responsive */}
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+        {/* <div className="flex items-center gap-1 text-xs text-gray-400">
           <HistoryIcon fontSize="small" className="text-gray-300" />
           <span>{isMobile ? 'History' : 'From your history'}</span>
-        </div>
+        </div> */}
       </div>
 
       {/* Horizontal Scroll Container with Navigation Buttons */}
@@ -142,9 +143,9 @@ const RecentlyPlayed = () => {
           className="overflow-x-auto scrollbar-hide scroll-smooth pb-2"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
-          <div className="flex w-[160px] sm:w-[180px] cursor-pointer" style={{ minWidth: 'min-content' }}>
+          <div className="flex w-[160px] sm:w-[180px] gap-2 sm:gap-4 cursor-pointer" style={{ minWidth: 'min-content' }}>
             {historyTracks.map((track, index) => (
-              <div key={track.id} className="w-40 sm:w-44 md:w-48 flex-shrink-0">
+              <div key={track.id} className="w-[140px] sm:w-[172px] flex-shrink-0">
                 <SongCard
                   track={track}
                   songs={historyTracks}

@@ -7,16 +7,12 @@ import {
   deletePlaylist,
   Playlist,
   PlaylistSong,
-  // playlistSongToISong,
-  // playlistSongsToISongs,
   playlistSongsToITracks,
 } from "../services/playlistService";
-// import SongCard from "@/features/songs/components/SongCard";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-// import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PublicIcon from "@mui/icons-material/Public";
 import LockIcon from "@mui/icons-material/Lock";
 import AddIcon from '@mui/icons-material/Add';
@@ -25,22 +21,27 @@ import { usePlayer } from "@/features/player/hooks/usePlayer";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useClickOutside } from "@/features/playlists/hooks/useClickOutside";
 import { ChevronLeftRounded } from "@mui/icons-material";
-// import { useResponsive } from "@/components/layout/hooks/useResponsive";
 
 const PlaylistPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { playTrack } = usePlayer();
   const { user } = useAuth();
-  // const { isMobile } = useResponsive();
 
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [songs, setSongs] = useState<PlaylistSong[]>([]);
   const [loading, setLoading] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
+  
+  // Separate state for mobile and desktop menus
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
 
-  const menuRef = useRef<HTMLDivElement>(null);
-  useClickOutside(menuRef as React.RefObject<HTMLElement>, () => setMenuOpen(false));
+  // Separate refs for mobile and desktop menus
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const desktopMenuRef = useRef<HTMLDivElement>(null);
+  
+  useClickOutside(mobileMenuRef as React.RefObject<HTMLElement>, () => setMobileMenuOpen(false));
+  useClickOutside(desktopMenuRef as React.RefObject<HTMLElement>, () => setDesktopMenuOpen(false));
 
   /* -----------------------------
      Load Playlist + Subscribe Songs
@@ -100,6 +101,10 @@ const PlaylistPage = () => {
       ...playlist,
       isPublic: !playlist.isPublic,
     });
+    
+    // Close menus after action
+    setMobileMenuOpen(false);
+    setDesktopMenuOpen(false);
   };
 
   const formatDuration = (duration?: string | number) => {
@@ -163,34 +168,29 @@ const PlaylistPage = () => {
             <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
           </div>
           <h1 className="text-lg font-semibold text-[#FA2E6E]">Playlist</h1>
-          {/* <span className="text-xs">Back</span> */}
         </button>
 
-        {/* Three-dot menu for mobile - positioned absolutely */}
+        {/* Three-dot menu for mobile - only visible on mobile */}
         {isOwner && (
-          <div className="z-10 md:hidden">
+          <div className="relative md:hidden">
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="text-[#FA2E6E] hover:text-[#E01E5A]"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-[#FA2E6E] hover:text-[#E01E5A] p-2"
+              aria-label="Playlist options"
             >
               <MoreHorizIcon fontSize="medium" />
             </button>
 
-            {/* Dropdown Menu */}
-            {menuOpen && (
+            {/* Mobile Dropdown Menu */}
+            {mobileMenuOpen && (
               <div
-                ref={menuRef}
-                className="absolute right-0 mt-0 w-48 bg-white rounded-md shadow-xl border border-gray-200 py-1 z-50"
+                ref={mobileMenuRef}
+                className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-xl border border-gray-200 py-1 z-50"
               >
                 <button
                   onClick={togglePublic}
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
                 >
-                  {playlist.isPublic ? (
-                    <LockIcon fontSize="small" className="text-gray-400" />
-                  ) : (
-                    <PublicIcon fontSize="small" className="text-gray-400" />
-                  )}
                   <span>{playlist.isPublic ? "Make Private" : "Make Public"}</span>
                 </button>
 
@@ -200,10 +200,7 @@ const PlaylistPage = () => {
                   onClick={handleDelete}
                   className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  <span>Delete Playlist</span>
+                  <span>Delete</span>
                 </button>
               </div>
             )}
@@ -265,7 +262,6 @@ const PlaylistPage = () => {
 
             {/* Description - hidden on mobile to save space */}
             <p className="hidden md:block text-gray-500 text-xs sm:text-sm mt-4 max-w-xl leading-relaxed text-center md:text-left">
-              {/* {playlist.description || `A collection of ${songs.length} songs curated by ${user?.name || 'you'}.`} */}
               {`A collection of ${songs.length} songs curated by ${user?.name || 'you'}.`}
             </p>
           </div>
@@ -289,31 +285,27 @@ const PlaylistPage = () => {
               <ShuffleIcon fontSize="small" /> <span className="text-sm">Shuffle</span>
             </button>
 
-            {/* Three-dot menu for mobile - positioned absolutely */}
+            {/* Three-dot menu for desktop - only visible on desktop */}
             {isOwner && (
-              <div className="hidden md:block md:static md:ml-auto">
+              <div className="hidden md:block relative ml-auto">
                 <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  className="text-[#FA2E6E] hover:text-[#E01E5A]"
+                  onClick={() => setDesktopMenuOpen(!desktopMenuOpen)}
+                  className="text-[#FA2E6E] hover:text-[#E01E5A] p-2"
+                  aria-label="Playlist options"
                 >
                   <MoreHorizIcon fontSize="medium" />
                 </button>
 
-                {/* Dropdown Menu */}
-                {menuOpen && (
+                {/* Desktop Dropdown Menu */}
+                {desktopMenuOpen && (
                   <div
-                    ref={menuRef}
-                    className="absolute right-0 mt-0 w-48 bg-white rounded-md shadow-xl border border-gray-200 py-1 z-50"
+                    ref={desktopMenuRef}
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl border border-gray-200 py-1 z-50"
                   >
                     <button
                       onClick={togglePublic}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
                     >
-                      {playlist.isPublic ? (
-                        <LockIcon fontSize="small" className="text-gray-400" />
-                      ) : (
-                        <PublicIcon fontSize="small" className="text-gray-400" />
-                      )}
                       <span>{playlist.isPublic ? "Make Private" : "Make Public"}</span>
                     </button>
 
@@ -323,10 +315,7 @@ const PlaylistPage = () => {
                       onClick={handleDelete}
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      <span>Delete Playlist</span>
+                      <span>Delete</span>
                     </button>
                   </div>
                 )}
@@ -338,12 +327,6 @@ const PlaylistPage = () => {
 
       {/* Track List Section */}
       <div className="mt-8 md:mt-10">
-        {/* <div className="flex items-center gap-2 mb-4">
-          <div className="w-1 h-5 bg-[#FA2E6E] rounded-full"></div>
-          <h2 className="text-lg font-semibold text-neutral-700">Songs</h2>
-          <span className="text-xs text-gray-400 ml-1">{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
-        </div> */}
-
         {songs.length > 0 ? (
           <div>
             {songs.map((song, index) => {
@@ -383,6 +366,7 @@ const PlaylistPage = () => {
                       className="opacity-0 group-hover:opacity-100 text-[#FA2E6E] hover:text-[#E01E5A] transition"
                       onClick={(e) => {
                         e.stopPropagation();
+                        // Handle individual song menu if needed
                       }}
                     >
                       <MoreHorizIcon fontSize="small" />
@@ -407,23 +391,6 @@ const PlaylistPage = () => {
           </div>
         )}
       </div>
-
-      {/* Mobile Quick Actions */}
-      {/* {isMobile && songs.length > 0 && (
-        <div className="fixed bottom-24 left-0 right-0 flex justify-center px-4 z-40">
-          <div className="bg-white/95 backdrop-blur-md shadow-lg rounded-full border border-gray-200 px-4 py-2 flex items-center gap-4">
-            <button onClick={handlePlayAll} className="flex items-center gap-2 text-sm text-gray-700">
-              <PlayArrowIcon fontSize="small" className="text-[#FA2E6E]" />
-              <span>Play</span>
-            </button>
-            <div className="w-px h-4 bg-gray-200"></div>
-            <button onClick={handleShufflePlay} className="flex items-center gap-2 text-sm text-gray-700">
-              <ShuffleIcon fontSize="small" className="text-gray-400" />
-              <span>Shuffle</span>
-            </button>
-          </div>
-        </div>
-      )} */}
     </div>
   );
 };

@@ -2,13 +2,14 @@ import { Link } from "react-router-dom";
 import { useUserPlaylists } from "../hooks/useUserPlaylist";
 import { deletePlaylist, updatePlaylist } from "../services/playlistService";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+// import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+// import EditIcon from "@mui/icons-material/Edit";
+// import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useState, useRef, useEffect } from "react";
 import { useClickOutside } from "@/features/playlists/hooks/useClickOutside";
-import { useResponsive } from "@/components/layout/hooks/useResponsive";
+// import { useResponsive } from "@/components/layout/hooks/useResponsive";
+import { PlayCircleFilledWhiteRounded } from "@mui/icons-material";
 
 const PlaylistList = () => {
   const { playlists, loading } = useUserPlaylists();
@@ -23,7 +24,7 @@ const PlaylistList = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
-  const { isMobile } = useResponsive();
+  // const { isMobile } = useResponsive();
 
   useClickOutside(menuRef as React.RefObject<HTMLElement>, () => {
     setOpenMenuId(null);
@@ -97,14 +98,7 @@ const PlaylistList = () => {
   if (loading) {
     return (
       <div className="px-3 py-4 space-y-2">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="flex items-center gap-3 px-3 py-2 animate-pulse">
-            <div className="w-10 h-10 rounded-md bg-gray-200"></div>
-            <div className="flex-1">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </div>
-          </div>
-        ))}
+        {/* <span>Loading...</span> */}
       </div>
     );
   }
@@ -112,7 +106,7 @@ const PlaylistList = () => {
   if (playlists.length === 0) {
     return (
       <div className="px-3 py-8 text-center">
-        <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+        <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-md flex items-center justify-center">
           <LibraryMusicIcon className="text-gray-400" fontSize="small" />
         </div>
         <p className="text-xs text-gray-500 mb-2">No playlists yet</p>
@@ -122,7 +116,7 @@ const PlaylistList = () => {
   }
 
   return (
-    <div className="mt-2 space-y-1 h-40 overflow-y-auto scroll-smooth bg-white relative pr-1">
+    <div className="h-[180px] overflow-y-auto scroll-smooth rounded-md relative pr-1 py-2">
       {playlists.map((playlist) => (
         <div
           key={playlist.id}
@@ -159,7 +153,7 @@ const PlaylistList = () => {
                       setEditName("");
                     }
                   }}
-                  className="w-full px-2 py-1 text-sm border border-[#FA2E6E] rounded-md focus:outline-none focus:ring-2 focus:ring-[#FA2E6E]/20"
+                  className="w-full px-2 py-1 text-sm border border-[#FA2E6E] rounded-md focus:outline-none"
                   placeholder="Playlist name"
                   autoFocus
                 />
@@ -173,7 +167,7 @@ const PlaylistList = () => {
                 className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               >
                 {/* Playlist Cover */}
-                <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-md overflow-hidden flex-shrink-0 bg-gray-200">
+                <div className="relative w-10 h-10 rounded-md overflow-hidden flex-shrink-0 bg-gray-200">
                   {playlist.coverURL ? (
                     <img
                       src={playlist.coverURL}
@@ -195,9 +189,9 @@ const PlaylistList = () => {
                       hoveredId === playlist.id ? "opacity-100" : "opacity-0"
                     }`}
                   >
-                    <PlayArrowIcon
+                    <PlayCircleFilledWhiteRounded
                       className="text-white"
-                      fontSize={isMobile ? "small" : "medium"}
+                      fontSize={"medium"}
                     />
                   </div>
                 </div>
@@ -237,7 +231,7 @@ const PlaylistList = () => {
               {openMenuId === playlist.id && menuPosition && (
                 <div
                   ref={menuRef}
-                  className="fixed z-[100] bg-white rounded-xl shadow-xl border border-gray-200 py-1 w-36 sm:w-40"
+                  className="fixed ml-16 p-1 z-[100] bg-white rounded-xl shadow-xl border border-gray-200 py- w-36 sm:w-40"
                   style={{
                     top: menuPosition.top,
                     left: menuPosition.left,
@@ -250,9 +244,9 @@ const PlaylistList = () => {
                       setOpenMenuId(null);
                       setMenuPosition(null);
                     }}
-                    className="w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                    className="w-full text-left px-4 py-2 text-xs sm:text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
                   >
-                    <EditIcon fontSize="small" className="text-gray-400" />
+                    {/* <EditIcon fontSize="small" className="text-gray-400" /> */}
                     <span>Rename</span>
                   </button>
 
@@ -261,7 +255,7 @@ const PlaylistList = () => {
                   <button
                     onClick={() => handleDelete(playlist.id)}
                     disabled={deletingId === playlist.id}
-                    className={`w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 ${
+                    className={`w-full text-left px-3 py-2 text-xs sm:text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 ${
                       deletingId === playlist.id ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
@@ -272,7 +266,7 @@ const PlaylistList = () => {
                       </>
                     ) : (
                       <>
-                        <DeleteOutlineIcon fontSize="small" />
+                        {/* <DeleteOutlineIcon fontSize="small" /> */}
                         <span>Delete</span>
                       </>
                     )}

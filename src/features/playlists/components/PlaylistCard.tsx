@@ -88,7 +88,7 @@ const PlaylistCard = ({ playlist, variant = 'default' }: Props) => {
       onClick={() => navigate(`/playlist/${playlist.id}`)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer w-full max-w-[180px] xs:max-w-[200px] sm:max-w-full mx-auto"
+      className="group relative bg-white rounded-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer w-full max-w-[180px] xs:max-w-[200px] sm:max-w-full mx-auto"
     >
       {/* Playlist Cover */}
       <div className="relative aspect-square overflow-hidden bg-gray-100">
@@ -110,7 +110,7 @@ const PlaylistCard = ({ playlist, variant = 'default' }: Props) => {
         {/* Hover Overlay */}
         <div className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
           {/* Play Button */}
-          <button 
+          {/* <button 
             onClick={(e) => {
               e.stopPropagation();
               // Handle play playlist
@@ -122,23 +122,23 @@ const PlaylistCard = ({ playlist, variant = 'default' }: Props) => {
               className="text-white group-hover:text-[#FA2E6E] transition-colors duration-200" 
               sx={{ fontSize: { xs: '2rem', sm: '2.2rem', md: '2.5rem' } }}
             />
-          </button>
+          </button> */}
 
           {/* More Options */}
-          <button 
+          {/* <button 
             onClick={(e) => e.stopPropagation()}
             className="absolute top-2 sm:top-3 right-2 sm:right-3 w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
           >
             <MoreHorizIcon className="text-white" sx={{ fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' } }} />
-          </button>
+          </button> */}
         </div>
 
         {/* Song Count Badge */}
-        {playlist.songCount > 0 && (
+        {/* {playlist.songCount > 0 && (
           <div className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 bg-black/60 backdrop-blur-sm text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
             {playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Playlist Info */}
