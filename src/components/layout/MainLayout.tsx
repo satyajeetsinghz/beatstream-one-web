@@ -9,9 +9,12 @@ import { usePlayer } from "@/features/player/hooks/usePlayer";
 
 const MainLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isDesktop, isMobile } = useResponsive();
-  const { currentTrack } = usePlayer(); // Check if player has a track
-  const isPlayerVisible = !!currentTrack; // Player is visible when there's a track
+  const { isDesktop, isMobile, isTablet } = useResponsive(); // Added isTablet
+  const { currentTrack } = usePlayer();
+  const isPlayerVisible = !!currentTrack;
+
+  // Show mobile nav for both mobile and tablet
+  const showMobileNav = isMobile || isTablet;
 
   return (
     <div className="h-screen bg-white flex overflow-hidden">
@@ -24,7 +27,7 @@ const MainLayout = () => {
         </div>
       )}
 
-      {/* Mobile Sidebar - slide-out panel */}
+      {/* Mobile/Tablet Sidebar - slide-out panel */}
       {!isDesktop && (
         <Sidebar 
           isMobile={true}
@@ -44,7 +47,9 @@ const MainLayout = () => {
           <div className={`
             ${isMobile 
               ? isPlayerVisible ? 'pb-32' : 'pb-16'  // Mobile: with/without player
-              : isPlayerVisible ? 'pb-24' : 'pb-8'   // Desktop: with/without player
+              : isTablet
+                ? isPlayerVisible ? 'pb-32' : 'pb-16'  // Tablet: same as mobile
+                : isPlayerVisible ? 'pb-24' : 'pb-8'   // Desktop: with/without player
             }
           `}>
             <Outlet />
@@ -55,10 +60,10 @@ const MainLayout = () => {
       {/* Player Bar - only shown when there's a track playing */}
       {isPlayerVisible && <PlayerBar />}
 
-      {/* Mobile Bottom Navigation - only on mobile */}
-      {isMobile && <MobileNav />}
+      {/* Mobile/Tablet Bottom Navigation - on mobile AND tablet */}
+      {showMobileNav && <MobileNav />}
 
-      {/* Overlay for mobile menu */}
+      {/* Overlay for mobile/tablet menu */}
       {!isDesktop && isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/40 z-40 lg:hidden animate-fadeIn"

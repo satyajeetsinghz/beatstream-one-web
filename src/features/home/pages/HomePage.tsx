@@ -6,7 +6,6 @@ import RecentlyPlayed from "@/features/history/components/RecentlyPlayed";
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import PersonIcon from '@mui/icons-material/Person';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useSections } from "@/features/sections/hooks/useSections";
 import { DynamicSection } from "@/features/sections/components/DynamicSection";
@@ -193,7 +192,6 @@ const HomePage = () => {
                     onClick={handleProfileClick}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    <PersonIcon fontSize="small" className="text-gray-500" />
                     <span>Profile</span>
                   </button>
 
@@ -203,7 +201,6 @@ const HomePage = () => {
                       onClick={handleAdminClick}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
-                      <AdminPanelSettingsIcon fontSize="small" className="text-gray-500" />
                       <span>Admin</span>
                     </button>
                   )}
@@ -214,7 +211,7 @@ const HomePage = () => {
                   {/* Sign Out Option */}
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-neutral-50 transition-colors"
                   >
                     <LogoutIcon fontSize="small" className="text-red-500" />
                     <span>Sign Out</span>

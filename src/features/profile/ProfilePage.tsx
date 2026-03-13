@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useProfile } from "./hooks/useProfile";
 import ProfileHeader from "./components/ProfileHeader";
-import ProfileInfo from "./components/ProfileInfo";
+// import ProfileInfo from "./components/ProfileInfo";
 import EditProfileModal from "./components/EditProfileModal";
 // import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 // import SettingsIcon from '@mui/icons-material/Settings';
@@ -66,7 +66,8 @@ const ProfilePage = () => {
               {/* Divider with responsive spacing */}
               <div className="my-4 sm:my-5 md:my-6 border-t border-gray-200"></div>
 
-              <ProfileInfo profile={profile} />
+              {/* <ProfileInfo profile={profile} /> */}
+              <h1 className="text-center text-sm font-semibold text-neutral-700">BeatStream One Beta version 2026.</h1>
             </div>
           </div>
         </div>

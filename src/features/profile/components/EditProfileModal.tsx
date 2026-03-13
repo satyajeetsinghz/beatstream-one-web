@@ -1,10 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { uploadProfileImage } from "../services/cloudinaryService";
-import CloseIcon from '@mui/icons-material/Close';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import PersonIcon from '@mui/icons-material/Person';
-import EmailIcon from '@mui/icons-material/Email';
-import { useResponsive } from "@/components/layout/hooks/useResponsive";
+import { CameraAltRounded } from "@mui/icons-material";
 
 interface Props {
     profile: any;
@@ -18,219 +15,371 @@ const EditProfileModal = ({ profile, onClose, onSave }: Props) => {
     const [imagePreview, setImagePreview] = useState<string | null>(profile?.photoURL || null);
     const [loading, setLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const modalRef = useRef<HTMLDivElement>(null);
-    const { isMobile } = useResponsive();
+    const [error, setError] = useState<string | null>(null);
 
-    // Handle click outside to close
+    const backdropRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // ── Body scroll lock ──────────────────────────────────────────────────────
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                onClose();
-            }
-        };
+        document.body.style.overflow = "hidden";
+        return () => { document.body.style.overflow = ""; };
+    }, []);
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [onClose]);
-
-    // Handle escape key
+    // ── Escape to close ───────────────────────────────────────────────────────
     useEffect(() => {
-        const handleEscKey = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                onClose();
-            }
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape" && !loading) onClose();
         };
+        document.addEventListener("keydown", handler);
+        return () => document.removeEventListener("keydown", handler);
+    }, [onClose, loading]);
 
-        document.addEventListener('keydown', handleEscKey);
-        return () => {
-            document.removeEventListener('keydown', handleEscKey);
-        };
-    }, [onClose]);
+    // ── Backdrop click ────────────────────────────────────────────────────────
+    const handleBackdropClick = useCallback(
+        (e: React.MouseEvent<HTMLDivElement>) => {
+            if (e.target === backdropRef.current && !loading) onClose();
+        },
+        [onClose, loading]
+    );
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0] || null;
+    // ── File change ───────────────────────────────────────────────────────────
+    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] ?? null;
+        if (!file) return;
+
         setImageFile(file);
-        
-        if (file) {
-            const previewUrl = URL.createObjectURL(file);
-            setImagePreview(previewUrl);
-            // Simulate upload progress
-            setUploadProgress(0);
-            const interval = setInterval(() => {
-                setUploadProgress(prev => {
-                    if (prev >= 100) {
-                        clearInterval(interval);
-                        return 100;
-                    }
-                    return prev + 10;
-                });
-            }, 100);
-        }
-    };
+        setImagePreview(URL.createObjectURL(file));
+        setUploadProgress(0);
 
-    const handleSubmit = async () => {
-        try {
-            setLoading(true);
-
-            let photoURL = profile?.photoURL;
-
-            if (imageFile) {
-                photoURL = await uploadProfileImage(imageFile);
-            }
-
-            await onSave({
-                displayName: name,
-                photoURL,
+        // Simulate upload progress indicator
+        const interval = setInterval(() => {
+            setUploadProgress((prev) => {
+                if (prev >= 100) { clearInterval(interval); return 100; }
+                return prev + 10;
             });
+        }, 80);
+    }, []);
 
+    // ── Submit ────────────────────────────────────────────────────────────────
+    const handleSubmit = useCallback(async () => {
+        if (!name.trim() || loading) return;
+        setError(null);
+        setLoading(true);
+
+        try {
+            let photoURL = profile?.photoURL;
+            if (imageFile) photoURL = await uploadProfileImage(imageFile);
+
+            await onSave({ displayName: name.trim(), photoURL });
             onClose();
-        } catch (error) {
-            console.error(error);
-            alert("Upload failed");
+        } catch (err) {
+            console.error("[EditProfileModal]", err);
+            setError("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
             setUploadProgress(0);
         }
-    };
+    }, [name, loading, imageFile, profile?.photoURL, onSave, onClose]);
 
-    return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
-            <div 
-                ref={modalRef}
-                className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-[95%] sm:max-w-md md:max-w-lg overflow-hidden animate-fadeIn"
+    const handleKeyDown = useCallback(
+        (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === "Enter") handleSubmit();
+        },
+        [handleSubmit]
+    );
+
+    // Derived
+    const initials = (profile?.name || "U")
+        .split(" ")
+        .map((w: string) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+
+    const isValid = name.trim().length > 0;
+
+    return createPortal(
+        <>
+            <style>{`
+                @keyframes sheetUp {
+                    from { opacity: 0; transform: translateY(24px) scale(0.98); }
+                    to   { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                @keyframes backdropIn {
+                    from { opacity: 0; }
+                    to   { opacity: 1; }
+                }
+                .ep-toggle {
+                    position: relative;
+                    width: 51px;
+                    height: 31px;
+                    border-radius: 999px;
+                    transition: background 0.2s;
+                    flex-shrink: 0;
+                    cursor: pointer;
+                    border: none;
+                    outline: none;
+                }
+                .ep-toggle-thumb {
+                    position: absolute;
+                    top: 2px;
+                    left: 2px;
+                    width: 27px;
+                    height: 27px;
+                    border-radius: 50%;
+                    background: #fff;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.22);
+                    transition: transform 0.22s cubic-bezier(0.34,1.3,0.64,1);
+                }
+                .ep-input {
+                    width: 100%;
+                    background: #fff;
+                    border: 1px solid #d1d1d6;
+                    border-radius: 10px;
+                    padding: 10px 14px;
+                    font-size: 15px;
+                    color: #1c1c1e;
+                    font-family: -apple-system, 'SF Pro Text', sans-serif;
+                    outline: none;
+                    transition: border-color 0.15s;
+                }
+                .ep-input:focus { border-color: #ff375f; }
+                .ep-input::placeholder { color: #aeaeb2; }
+            `}</style>
+
+            {/* Backdrop - centered content with flex */}
+            <div
+                ref={backdropRef}
+                onClick={handleBackdropClick}
+                className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                style={{
+                    background: "rgba(0,0,0,0.45)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    animation: "backdropIn 0.18s ease",
+                }}
             >
-                {/* Header - Responsive */}
-                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
-                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Edit Profile</h2>
-                    <button
-                        onClick={onClose}
-                        className="p-1.5 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
-                        aria-label="Close"
-                    >
-                        <CloseIcon className="text-gray-500" fontSize={isMobile ? "small" : "medium"} />
-                    </button>
-                </div>
+                {/* ── Sheet - height auto, centered ── */}
+                <div
+                    className="relative w-full max-w-[400px] md:max-w-[420px] lg:max-w-[440px] rounded-[20px] overflow-hidden mx-auto"
+                    style={{
+                        background: "#f2f2f7",
+                        boxShadow: "0 24px 64px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.12)",
+                        animation: "sheetUp 0.28s cubic-bezier(0.34,1.3,0.64,1)",
+                        // fontFamily: "-apple-system,'SF Pro Text',sans-serif",
+                        maxHeight: "calc(100vh - 32px)",
+                        overflowY: "auto",
+                    }}
+                >
+                    {/* Drag handle — visible only on mobile */}
+                    <div className="flex justify-center pt-2.5 pb-0 sm:hidden">
+                        <div className="w-10 h-1 rounded-full bg-black/15" />
+                    </div>
 
-                {/* Content - Responsive */}
-                <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[70vh] overflow-y-auto">
-                    {/* Profile Image Section */}
-                    <div className="flex flex-col items-center">
-                        <div className="relative group">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full overflow-hidden ring-4 ring-white shadow-xl transition-transform group-hover:scale-105">
-                                <img
-                                    src={imagePreview || "/default-avatar.png"}
-                                    alt="Profile"
-                                    className="w-full h-full object-cover"
-                                />
+                    {/* ── Title ── */}
+                    <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-0">
+                        <h2
+                            className="font-semibold text-xl sm:text-2xl text-neutral-700"
+                            style={{ letterSpacing: "-0.5px" }}
+                        >
+                            Edit Profile
+                        </h2>
+                    </div>
+
+                    {/* ── Avatar row + Name/Username fields ── */}
+                    <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-1 flex flex-col sm:flex-row items-start gap-4">
+                        {/* Avatar + camera */}
+                        <div className="relative self-center sm:self-start">
+                            <div
+                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden flex items-center justify-center"
+                                style={{
+                                    background: imagePreview ? "transparent" : "#c7c7cc",
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                }}
+                            >
+                                {imagePreview ? (
+                                    <img
+                                        src={imagePreview}
+                                        alt="Preview"
+                                        className="w-full h-full object-cover"
+                                        draggable={false}
+                                    />
+                                ) : (
+                                    <span
+                                        className="font-semibold select-none text-2xl sm:text-3xl"
+                                        style={{ color: "#3a3a3c"}}
+                                    >
+                                        {initials}
+                                    </span>
+                                )}
                             </div>
-                            <label className="absolute bottom-0 right-0 w-7 h-7 sm:w-8 sm:h-8 bg-[#FA2E6E] rounded-full flex items-center justify-center cursor-pointer shadow-lg hover:bg-[#E01E5A] transition-colors hover:scale-110">
-                                <PhotoCameraIcon className="text-white" fontSize="small" />
+
+                            {/* Camera icon badge */}
+                            <label
+                                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center cursor-pointer"
+                                // style={{
+                                //     background: "rgba(60,60,67,0.22)",
+                                //     backdropFilter: "blur(4px)",
+                                // }}
+                                aria-label="Change photo"
+                            >
+                                <CameraAltRounded
+                                    sx={{ fontSize: { xs: 15, sm: 17 } }}
+                                    style={{ color: "#fff" }}
+                                />
                                 <input
+                                    ref={fileInputRef}
                                     type="file"
                                     accept="image/*"
                                     onChange={handleFileChange}
                                     className="hidden"
                                 />
                             </label>
+
+                            {/* Upload progress */}
+                            {uploadProgress > 0 && uploadProgress < 100 && (
+                                <div className="absolute -bottom-5 left-0 right-0">
+                                    <div className="h-[3px] rounded-full bg-black/10 overflow-hidden">
+                                        <div
+                                            className="h-full rounded-full transition-all duration-150"
+                                            style={{ width: `${uploadProgress}%`, background: "#ff375f" }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        
-                        {/* Upload Progress */}
-                        {uploadProgress > 0 && uploadProgress < 100 && (
-                            <div className="w-32 sm:w-40 mt-2">
-                                <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-[#FA2E6E] transition-all duration-300"
-                                        style={{ width: `${uploadProgress}%` }}
+
+                        {/* Name + Username fields */}
+                        <div className="flex-1 w-full space-y-3">
+                            {/* Name */}
+                            <div>
+                                <p className="mb-1 text-xs sm:text-sm" style={{ color: "#3a3a3c", fontWeight: 500 }}>
+                                    Name
+                                </p>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => { setName(e.target.value); setError(null); }}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder="Your name"
+                                    maxLength={50}
+                                    disabled={loading}
+                                    className="ep-input disabled:opacity-50 text-sm"
+                                    style={{ caretColor: "#ff375f" }}
+                                />
+                            </div>
+
+                            {/* Username */}
+                            {profile?.email && (
+                                <div>
+                                    <p className="mb-1 text-xs sm:text-sm" style={{ color: "#3a3a3c", fontWeight: 500 }}>
+                                        Username
+                                    </p>
+                                    <input
+                                        type="text"
+                                        value={
+                                            profile?.username
+                                                ? `@${profile.username}`
+                                                : `@${profile.email.split("@")[0]}`
+                                        }
+                                        readOnly
+                                        className="ep-input text-sm"
+                                        style={{ color: "#8e8e93", cursor: "default" }}
                                     />
                                 </div>
-                                <p className="text-[10px] text-gray-400 text-center mt-1">
-                                    Uploading... {uploadProgress}%
-                                </p>
-                            </div>
-                        )}
-                        
-                        <p className="text-[10px] sm:text-xs text-gray-400 mt-2">
-                            Tap camera to change photo
-                        </p>
-                    </div>
-
-                    {/* Name Input with Icon */}
-                    <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1 sm:mb-2">
-                            <div className="flex items-center gap-1">
-                                <PersonIcon fontSize="small" className="text-gray-400" />
-                                <span>Display Name</span>
-                            </div>
-                        </label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Your name"
-                            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-200 rounded-lg sm:rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FA2E6E]/20 focus:border-[#FA2E6E] transition-colors"
-                        />
-                    </div>
-
-                    {/* Email (read-only) with Icon */}
-                    {profile?.email && (
-                        <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-1 sm:mb-2">
-                                <div className="flex items-center gap-1">
-                                    <EmailIcon fontSize="small" className="text-gray-400" />
-                                    <span>Email</span>
-                                </div>
-                            </label>
-                            <div className="flex items-center gap-2 p-2 sm:p-3 bg-gray-50 rounded-lg sm:rounded-xl border border-gray-200">
-                                <EmailIcon className="text-gray-400" fontSize="small" />
-                                <p className="text-xs sm:text-sm text-gray-700 break-all">
-                                    {profile.email}
-                                </p>
-                            </div>
+                            )}
                         </div>
+                    </div>
+
+                    {/* Hint text */}
+                    <p className="px-4 sm:px-5 pt-2 text-xs sm:text-sm" style={{ color: "#8e8e93", lineHeight: 1.4 }}>
+                        Your photo, name and username will be public so people can find and follow you.
+                    </p>
+
+                    {/* Error */}
+                    {error && (
+                        <p className="px-4 sm:px-5 pt-2 text-xs text-center" style={{ color: "#ff3b30" }}>
+                            {error}
+                        </p>
                     )}
 
-                    {/* Additional Info - Optional */}
-                    <div className="bg-gray-50/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-gray-200">
-                        <p className="text-[10px] sm:text-xs text-gray-500">
-                            <span className="font-medium">Member since:</span>{' '}
-                            {new Date().toLocaleDateString('en-US', { 
-                                month: 'long', 
-                                year: 'numeric' 
-                            })}
+                    {/* ── Divider ── */}
+                    <div className="mx-4 sm:mx-5 my-4" style={{ height: 1, background: "#c6c6c8" }} />
+
+                    {/* ── Who can follow ── */}
+                    {/* <div className="px-4 sm:px-5">
+                        <p className="font-bold text-base sm:text-lg mb-3" style={{ color: "#1c1c1e", letterSpacing: "-0.2px" }}>
+                            Choose Who Can Follow Your Activity
                         </p>
+
+                        Everyone row
+                        <div className="flex items-start justify-between gap-2 mb-4">
+                            <div className="flex-1 pr-2">
+                                <p className="text-sm font-medium" style={{ color: "#1c1c1e" }}>Everyone</p>
+                                <p className="text-xs sm:text-sm" style={{ color: "#8e8e93", marginTop: 2 }}>
+                                    Anyone can follow and see your music.
+                                </p>
+                            </div>
+                            <button className="ep-toggle flex-shrink-0" style={{ background: "#ff375f" }} aria-label="Everyone toggle">
+                                <div className="ep-toggle-thumb" style={{ transform: "translateX(20px)" }} />
+                            </button>
+                        </div>
+
+                        People you approve row
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                            <div className="flex-1 pr-2">
+                                <p className="text-sm font-medium" style={{ color: "#1c1c1e" }}>People you approve</p>
+                                <p className="text-xs sm:text-sm" style={{ color: "#8e8e93", marginTop: 2 }}>
+                                    Only people you approve can follow and see your music.
+                                </p>
+                            </div>
+                            <button className="ep-toggle flex-shrink-0" style={{ background: "#e5e5ea" }} aria-label="People you approve toggle">
+                                <div className="ep-toggle-thumb" style={{ transform: "translateX(0)" }} />
+                            </button>
+                        </div>
+                    </div> */}
+
+                    {/* ── Show on Profile ── */}
+                    {/* <div className="px-4 sm:px-5 mb-4">
+                        <p className="font-bold text-base sm:text-lg mb-1" style={{ color: "#1c1c1e", letterSpacing: "-0.2px" }}>
+                            Show on Profile
+                        </p>
+                    </div> */}
+
+                    {/* ── Footer buttons ── */}
+                    <div className="px-4 sm:px-5 pb-6 flex gap-2">
+                        <button
+                            onClick={handleSubmit}
+                            disabled={!isValid || loading}
+                            className="flex-1 py-2 sm:py-1.5 rounded-full sm:rounded-md text-sm font-semibold flex items-center justify-center gap-2 transition-opacity"
+                            style={{
+                                background: "#ff375f",
+                                color: "#fff",
+                                opacity: !isValid || loading ? 0.45 : 1,
+                            }}
+                        >
+                            {loading ? (
+                                <>
+                                    <span className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                                    Saving
+                                </>
+                            ) : "Save"}
+                        </button>
+
+                        <button
+                            onClick={onClose}
+                            disabled={loading}
+                            className="flex-1 py-2 sm:py-1.5 rounded-full sm:rounded-md text-sm font-semibold transition-opacity disabled:opacity-50"
+                            style={{ background: "#e5e5ea", color: "#3a3a3c" }}
+                        >
+                            Cancel
+                        </button>
                     </div>
                 </div>
-
-                {/* Footer - Responsive */}
-                <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-200 bg-gray-50/50">
-                    <button
-                        onClick={onClose}
-                        className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors border border-gray-200 rounded-full hover:bg-gray-100"
-                        disabled={loading}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading || !name.trim()}
-                        className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-medium bg-[#FA2E6E] text-white rounded-full hover:bg-[#E01E5A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                        {loading ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                <span>Saving...</span>
-                            </>
-                        ) : (
-                            <>
-                                <span>Save Changes</span>
-                            </>
-                        )}
-                    </button>
-                </div>
             </div>
-        </div>
+        </>,
+        document.body
     );
 };
 
