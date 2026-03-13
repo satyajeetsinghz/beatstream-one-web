@@ -11,6 +11,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import ExplicitIcon from '@mui/icons-material/Explicit';
 import { ChevronLeftRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import AnimatedSpinner from "@/components/ui/LoadingSpinner/AnimatedSpinner";
 // import { useResponsive } from "@/components/layout/hooks/useResponsive";
 
 const LikedSongs = () => {
@@ -76,7 +77,8 @@ const LikedSongs = () => {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-2 border-gray-200 border-t-[#FA2E6E] rounded-full animate-spin"></div>
+                    {/* <div className="w-8 h-8 border-2 border-gray-200 border-t-[#FA2E6E] rounded-full animate-spin"></div> */}
+                    <AnimatedSpinner size={28} color="#ff375f" />
                     <p className="text-sm text-gray-400">Loading your liked songs...</p>
                 </div>
             </div>

@@ -5,7 +5,7 @@ import SongCard from "@/features/songs/components/SongCard";
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { clearHistory } from "../services/historyService";
-import { useResponsive } from "@/components/layout/hooks/useResponsive";
+// import { useResponsive } from "@/components/layout/hooks/useResponsive";
 import { useState, useRef } from "react";
 
 const RecentlyPlayed = () => {
@@ -15,7 +15,7 @@ const RecentlyPlayed = () => {
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const { isMobile } = useResponsive();
+  // const { isMobile } = useResponsive();
 
   const handleClearHistory = async () => {
     if (!user?.uid) return;
@@ -175,13 +175,13 @@ const RecentlyPlayed = () => {
       <div className="absolute right-0 mt-2 w-8 h-32 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
 
       {/* View all link for mobile (if more than 6 items) */}
-      {historyTracks.length > 6 && isMobile && (
+      {/* {historyTracks.length > 6 && isMobile && (
         <div className="mt-4 text-center">
           <button className="text-xs text-gray-400 hover:text-[#FA2E6E] transition-colors">
             View all {historyTracks.length} songs
           </button>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

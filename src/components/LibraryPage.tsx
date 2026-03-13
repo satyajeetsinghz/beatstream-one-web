@@ -12,22 +12,25 @@ import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
-import MusicNoteRoundedIcon from "@mui/icons-material/MusicNoteRounded";
+// import MusicNoteRoundedIcon from "@mui/icons-material/MusicNoteRounded";
 import GridViewRoundedIcon from "@mui/icons-material/GridViewRounded";
 import ViewListRoundedIcon from "@mui/icons-material/ViewListRounded";
-import LinearProgress from "@mui/material/LinearProgress";
+import AnimatedSpinner from "./ui/LoadingSpinner/AnimatedSpinner";
 
+// ─── Shared: Playlist Cover ───────────────────────────────────────────────────
 // ─── Shared: Playlist Cover ───────────────────────────────────────────────────
 const PlaylistCover = ({
   coverURL,
   name,
   className = "",
+  viewMode = "grid", // Add viewMode prop with default
 }: {
   coverURL?: string;
   name: string;
   className?: string;
+  viewMode?: "grid" | "list";
 }) => (
-  <div className={`overflow-hidden rounded-lg shadow-sm shrink-0 ${className}`}>
+  <div className={`overflow-hidden rounded-md shadow-sm shrink-0 ${className}`}>
     {coverURL ? (
       <img src={coverURL} alt={name} className="w-full h-full object-cover" />
     ) : (
@@ -35,7 +38,14 @@ const PlaylistCover = ({
         className="w-full h-full flex items-center justify-center"
         style={{ background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)" }}
       >
-        <MusicNoteRoundedIcon className="text-white/80" sx={{ fontSize: "40%" }} />
+        <LibraryMusicIcon
+          className="text-white/80"
+          sx={{
+            fontSize: viewMode === "grid"
+              ? { xs: 40, sm: 72 }  // Grid view: larger icon
+              : { xs: 16, sm: 20 }  // List view: smaller icon
+          }}
+        />
       </div>
     )}
   </div>
@@ -43,7 +53,7 @@ const PlaylistCover = ({
 
 // ─── Shared: Skeleton ─────────────────────────────────────────────────────────
 const Skeleton = ({ className = "" }: { className?: string }) => (
-  <div className={`rounded-lg animate-pulse bg-gray-200 ${className}`} />
+  <div className={`rounded-md animate-pulse bg-gray-200 ${className}`} />
 );
 
 // ─── Shared: Section Header ───────────────────────────────────────────────────
@@ -58,7 +68,7 @@ const SectionHeader = ({
 }) => (
   <div className="flex items-center justify-between mb-5">
     <div className="flex items-center gap-2">
-      <h2 className="text-xl font-semibold text-gray-900 tracking-tight">
+      <h2 className="text-xl font-semibold text-neutral-700  tracking-tight">
         {title}
       </h2>
       {count !== undefined && (
@@ -137,9 +147,8 @@ const LibraryPage = () => {
       <div className="px-4 sm:px-6 md:px-8 lg:px-10 pb-32">
 
         {/* ── Hero header ── */}
-        <div className="pt-8 pb-8 fade-up">
-          <div className={`flex relative ${isMobile ? "flex-col items-center text-center" : "flex-row items-center"} gap-6`}>
-
+        <div className="pt-0 pb-8 fade-up">
+          <div className={`flex relative ${isMobile ? "flex-col items-center text-center gap-6" : "flex-row gap-10"}`}>
             {/* Big cover art */}
             <div
               className="shrink-0 rounded-md overflow-hidden shadow-xl"
@@ -157,41 +166,48 @@ const LibraryPage = () => {
               </div>
             </div>
 
-            {/* Text */}
-            <div className={isMobile ? "" : "mb-1"}>
-              {/* <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">
-                Library
-              </p> */}
-              <div className={isMobile ? "" : "absolute top-5"}>
-                <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 tracking-tight mb-2">
-                  Your Library
-                </h1>
+            {/* Right side content - exactly matching album cover height */}
+            <div className="flex-1 flex flex-col" style={{ height: isMobile ? 140 : 180 }}>
+              {/* Top section - aligned to top of album cover */}
+              <div className="flex flex-col justify-start">
+                {/* Title */}
+                <div className="flex items-center justify-center md:justify-start">
+                  <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-700 leading-tight">
+                    Your Library
+                  </h1>
+                </div>
+
+                {/* Subtitle */}
+                {/* <h2 className="block sm:hidden text-[#FA2E6E] text-xl sm:text-2xl font-medium text-center md:text-left leading-snug">
+                  {playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}
+                </h2> */}
 
                 {/* Meta row */}
-                <div className="flex flex-wrap items-center justify-center md:justify-start ml-1 gap-2 text-sm text-gray-500">
-                  <span>{playlists.length} {playlists.length === 1 ? "playlist" : "playlists"}</span>
+                <div className="text-xs sm:text-sm text-gray-500 mt-1.5 flex flex-wrap items-center justify-center md:justify-start gap-2 pl-1.5">
+                  <span>{playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}</span>
                   <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <span>{likedCount} liked {likedCount === 1 ? "song" : "songs"}</span>
+                  <span>{likedCount} liked {likedCount === 1 ? 'song' : 'songs'}</span>
                 </div>
+
+                {/* Description */}
+                <p className="hidden md:block text-gray-500 text-xs sm:text-sm mt-3 max-w-xl leading-relaxed text-center md:text-left pl-1">
+                  Your personal collection of playlists and liked songs
+                </p>
               </div>
 
-              {/* CTA buttons */}
+              {/* Spacer - pushes buttons to bottom */}
+              <div className="flex-1"></div>
+
+              {/* CTA buttons - exactly aligned with bottom of album cover */}
               {!isMobile && (
-                <div className="flex items-center gap-3 mb-1 absolute bottom-0">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={openModal}
-                    className="bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-3 py-1.5 rounded-md font-medium flex items-center gap-0.5 text-sm shadow-sm"
+                    className="bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-4 py-2 rounded-md font-medium flex items-center gap-1 text-sm shadow-sm"
                   >
-                    <AddRoundedIcon sx={{ fontSize: 18 }} />
-                    New Playlist
+                    <AddRoundedIcon fontSize="small" />
+                    <span>New Playlist</span>
                   </button>
-                  {/* <Link
-                    to="/liked"
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    <FavoriteRoundedIcon sx={{ fontSize: 16 }} className="text-[#ff375f]" />
-                    Liked Songs
-                  </Link> */}
                 </div>
               )}
             </div>
@@ -206,7 +222,7 @@ const LibraryPage = () => {
           >
             {/* Gradient thumb */}
             <div
-              className="w-14 h-14 rounded-lg shrink-0 flex items-center justify-center shadow-sm"
+              className="w-14 h-14 rounded-md shrink-0 flex items-center justify-center shadow-sm"
               style={{
                 background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)",
               }}
@@ -215,27 +231,18 @@ const LibraryPage = () => {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">
+              <p className="text-sm sm:text-base font-semibold text-neutral-700 truncate">
                 Liked Songs
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
-  {likedLoading ? (
-    <div className="w-16">
-      <LinearProgress 
-        sx={{ 
-          height: 3, 
-          borderRadius: 1.5,
-          bgcolor: 'rgba(0,0,0,0.1)',
-          '& .MuiLinearProgress-bar': {
-            bgcolor: 'rgba(0,0,0,0.3)',
-          }
-        }} 
-      />
-    </div>
-  ) : (
-    `${likedCount} ${likedCount === 1 ? "song" : "songs"}`
-  )}
-</p>
+                {likedLoading ? (
+                  <div className="w-16">
+                    <AnimatedSpinner size={16} color="#ff375f" />
+                  </div>
+                ) : (
+                  `${likedCount} ${likedCount === 1 ? "song" : "songs"}`
+                )}
+              </p>
             </div>
 
             <ChevronRightRoundedIcon className="text-gray-400 shrink-0" sx={{ fontSize: 18 }} />
@@ -248,7 +255,7 @@ const LibraryPage = () => {
             title="Your Playlists"
             // count={playlists.length}
             right={
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+              <div className="flex items-center gap-1 bg-gray-100 rounded-md p-1">
                 <button
                   onClick={() => setViewMode("grid")}
                   className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-white shadow-sm" : "hover:bg-gray-200"
@@ -336,10 +343,11 @@ const LibraryPage = () => {
                     <PlaylistCover
                       coverURL={playlist.coverURL}
                       name={playlist.name}
+                      viewMode="grid"  // Pass grid mode
                       className="aspect-square w-full mb-2 shadow-sm transition-all duration-300 group-hover:backdrop-blur-sm group-hover:brightness-75"
                     />
                     {/* Optional: Add a dark overlay for more contrast */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 rounded-lg pointer-events-none" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 rounded-md pointer-events-none" />
                   </div>
 
                   <p className="text-sm font-medium text-gray-900 truncate">
@@ -360,12 +368,13 @@ const LibraryPage = () => {
                 <Link
                   key={playlist.id}
                   to={`/playlist/${playlist.id}`}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg row-hover fade-up"
+                  className="flex items-center gap-3 px-3 py-2 rounded-md row-hover fade-up"
                   style={{ animationDelay: `${i * 30}ms` }}
                 >
                   <PlaylistCover
                     coverURL={playlist.coverURL}
                     name={playlist.name}
+                    viewMode="list"  // Pass list mode
                     className="w-10 h-10 shrink-0"
                   />
                   <div className="flex-1 min-w-0">

@@ -2,9 +2,9 @@ import { Link, useLocation } from "react-router-dom";
 import HomeIcon from "@mui/icons-material/Home";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
 import PlaylistPlayIcon from "@mui/icons-material/PlaylistPlay";
-import PersonIcon from "@mui/icons-material/Person";
+// import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+// import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import CloseIcon from "@mui/icons-material/Close";
 import { useState, useEffect, useRef } from "react";
 import AddIcon from "@mui/icons-material/Add";
@@ -248,7 +248,7 @@ const Sidebar = ({
             {showProfileMenu && (
               <div
                 ref={profileMenuRef}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-slideUp"
+                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-md shadow-md border border-gray-200 py-2 z-50 animate-slideUp"
               >
                 {/* Profile Option */}
                 <Link
@@ -256,7 +256,7 @@ const Sidebar = ({
                   onClick={handleProfileClick}
                   className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
-                  <PersonIcon fontSize="small" className="text-gray-500" />
+                  {/* <PersonIcon fontSize="small" className="text-gray-500" /> */}
                   <span>View Profile</span>
                 </Link>
 
@@ -267,7 +267,7 @@ const Sidebar = ({
                     onClick={handleAdminClick}
                     className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    <AdminPanelSettingsIcon fontSize="small" className="text-gray-500" />
+                    {/* <AdminPanelSettingsIcon fontSize="small" className="text-gray-500" /> */}
                     <span>Admin Panel</span>
                   </Link>
                 )}
@@ -278,7 +278,7 @@ const Sidebar = ({
                 {/* Sign Out Option */}
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-neutral-50 transition-colors"
                 >
                   <LogoutIcon fontSize="small" className="text-red-500" />
                   <span>Sign Out</span>

@@ -21,6 +21,7 @@ import { usePlayer } from "@/features/player/hooks/usePlayer";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useClickOutside } from "@/features/playlists/hooks/useClickOutside";
 import { ChevronLeftRounded } from "@mui/icons-material";
+import AnimatedSpinner from "@/components/ui/LoadingSpinner/AnimatedSpinner";
 
 const PlaylistPage = () => {
   const { id } = useParams();
@@ -141,7 +142,8 @@ const PlaylistPage = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-[#FA2E6E] rounded-full animate-spin"></div>
+          {/* <div className="w-8 h-8 border-2 border-gray-200 border-t-[#FA2E6E] rounded-full animate-spin"></div> */}
+          <AnimatedSpinner size={28} color="#ff375f" />
           <p className="text-sm text-gray-400">Loading playlist...</p>
         </div>
       </div>

@@ -8,6 +8,7 @@ import EditProfileModal from "./components/EditProfileModal";
 import { useNavigate } from "react-router-dom";
 // import { useResponsive } from "@/components/layout/hooks/useResponsive";
 import { ChevronLeftRounded } from "@mui/icons-material";
+import AnimatedSpinner from "@/components/ui/LoadingSpinner/AnimatedSpinner";
 
 const ProfilePage = () => {
   const { profile, loading, updateProfile } = useProfile();
@@ -20,7 +21,8 @@ const ProfilePage = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-[#fea1be] border-t-[#FA2E6E] rounded-full animate-spin"></div>
+          {/* <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-[#fea1be] border-t-[#FA2E6E] rounded-full animate-spin"></div> */}
+          <AnimatedSpinner size={28} color="#ff375f" />
           <p className="text-xs sm:text-sm text-gray-400 font-medium">Loading profile...</p>
         </div>
       </div>
