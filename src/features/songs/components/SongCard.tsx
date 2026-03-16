@@ -2,7 +2,7 @@ import { ISong } from "../types";
 import { usePlayer } from "@/features/player/hooks/usePlayer";
 import { useLike } from "@/features/likes/hooks/useLike";
 import { usePlaylists } from "@/features/playlists/hooks/usePlaylists";
-import { addSongToPlaylist } from "@/features/playlists/services/playlistService";
+import { addSongToPlaylist, iSongToPlaylistSong } from "@/features/playlists/services/playlistService";
 import { useRef, useState, useEffect, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
 
@@ -156,7 +156,7 @@ const ContextMenu = memo(({
         async (playlistId: string) => {
             try {
                 setAddedId(playlistId);
-                await addSongToPlaylist(playlistId, track);
+                await addSongToPlaylist(playlistId, iSongToPlaylistSong(track));
                 setTimeout(() => {
                     setAddedId(null);
                     onClose();
@@ -222,7 +222,7 @@ const ContextMenu = memo(({
                     <div className="py-1" style={{ animation: pos.ready ? "slideIn 0.15s ease" : "none" }}>
                         <MenuRowLight
                             icon={<PlaylistAddIcon sx={{ fontSize: 16 }} />}
-                            iconCls="text-[#ff375f]"
+                            iconCls="text-[#fa243c]"
                             label="Add to Playlist"
                             right={<ChevronRightIcon sx={{ fontSize: 14 }} />}
                             onClick={() => setActiveMenu("playlists")}
@@ -237,7 +237,7 @@ const ContextMenu = memo(({
                                         <FavoriteBorderIcon sx={{ fontSize: 15 }} />
                                     )
                                 }
-                                iconCls={isLiked ? "text-[#ff375f]" : "text-gray-400"}
+                                iconCls={isLiked ? "text-[#fa243c]" : "text-gray-400"}
                                 label={isLiked ? "Remove from Favorites" : "Add to Favorites"}
                                 onClick={() => { onToggleLike(); onClose(); }}
                             />
@@ -265,7 +265,7 @@ const ContextMenu = memo(({
                     <div className="py-1" style={{ animation: pos.ready ? "slideBack 0.15s ease" : "none" }}>
                         <button
                             onClick={() => setActiveMenu("main")}
-                            className="flex items-center gap-1.5 w-full px-3 py-2 text-[12.5px] text-[#ff375f] hover:bg-gray-50 transition-colors"
+                            className="flex items-center gap-1.5 w-full px-3 py-2 text-[12.5px] text-[#fa243c] hover:bg-gray-50 transition-colors"
                         >
                             <ChevronLeftIcon sx={{ fontSize: 14 }} />
                             <span>Back</span>
@@ -292,7 +292,7 @@ const ContextMenu = memo(({
                                             {p.name}
                                         </span>
                                         {addedId === p.id ? (
-                                            <span className="text-[#ff375f]">
+                                            <span className="text-[#fa243c]">
                                                 <CheckIcon sx={{ fontSize: 14 }} />
                                             </span>
                                         ) : (
@@ -308,7 +308,7 @@ const ContextMenu = memo(({
                         <div className="h-px bg-gray-100 my-1" />
                         <button
                             onClick={() => { onClose(); setActiveMenu("main"); }}
-                            className="flex items-center gap-2.5 w-full px-3 py-[9px] text-[#ff375f] text-[13px] hover:bg-gray-50 transition-colors"
+                            className="flex items-center gap-2.5 w-full px-3 py-[9px] text-[#fa243c] text-[13px] hover:bg-gray-50 transition-colors"
                         >
                             <span className="text-[18px] leading-none">+</span>
                             <span>New Playlist</span>
@@ -329,7 +329,7 @@ const EqBars = memo(() => (
         {[0, 1, 2].map((i) => (
             <div
                 key={i}
-                className="w-[3px] rounded-sm bg-[#ff375f] animate-eqBar"
+                className="w-[3px] rounded-sm bg-[#fa243c] animate-eqBar"
                 style={{ animationDelay: `${i * 0.15}s` }}
             />
         ))}
@@ -417,7 +417,7 @@ const SongCard = memo(({
                                 color: '#fff',
                                 transition: 'color 0.2s ease',
                                 '&:hover': {
-                                    color: '#ff375f' // Apple Music pink color
+                                    color: '#fa243c' // Apple Music pink color
                                 }
                             }}
                         />
@@ -507,7 +507,7 @@ const SongCard = memo(({
                                     color: '#fff',
                                     transition: 'color 0.2s ease',
                                     '&:hover': {
-                                        color: '#ff375f' // Apple Music pink color
+                                        color: '#fa243c' // Apple Music pink color
                                     }
                                 }}
                             />
@@ -531,7 +531,7 @@ const SongCard = memo(({
                         style={{
                             opacity: isHovered || isLiked ? 1 : 0,
                             transform: `scale(${isHovered || isLiked ? 1 : 0.8})`,
-                            color: isLiked ? "#ff375f" : "rgba(156,163,175,0.6)",
+                            color: isLiked ? "#fa243c" : "rgba(156,163,175,0.6)",
                         }}
                         aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}
                     >
@@ -605,7 +605,7 @@ const SongCard = memo(({
                             style={{
                                 opacity: isHovered || isLiked ? 1 : 0,
                                 transform: `scale(${isHovered || isLiked ? 1 : 0.8})`,
-                                color: isLiked ? "#ff375f" : "rgba(156,163,175,0.5)",
+                                color: isLiked ? "#fa243c" : "rgba(156,163,175,0.5)",
                             }}
                             aria-label={isLiked ? "Remove from favorites" : "Add to favorites"}
                         >

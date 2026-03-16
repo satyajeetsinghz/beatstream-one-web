@@ -116,7 +116,7 @@ const ProfileHeader = ({ profile, onEdit }: Props) => {
             onClick={onEdit}
             className="flex items-center gap-1.5 px-5 py-1.5 sm:py-1 rounded-full sm:rounded-md font-semibold transition-opacity hover:opacity-85 active:opacity-60"
             style={{
-              background: "#ff375f",
+              background: "#fa243c",
               color: "#fff",
               fontSize: 14,
               // fontFamily: "-apple-system, 'SF Pro Text', sans-serif",
@@ -131,7 +131,7 @@ const ProfileHeader = ({ profile, onEdit }: Props) => {
           <button
             className="w-8 h-8 rounded-full flex items-center justify-center transition-opacity hover:opacity-85 active:opacity-60"
             style={{
-              background: "#ff375f",
+              background: "#fa243c",
               color: "#fff",
               // boxShadow: "0 2px 8px rgba(255,55,95,0.35)",
             }}

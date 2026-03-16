@@ -21,8 +21,8 @@ const ProfilePage = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-4 text-center">
-          {/* <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-[#fea1be] border-t-[#FA2E6E] rounded-full animate-spin"></div> */}
-          <AnimatedSpinner size={28} color="#ff375f" />
+          {/* <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-[#fea1be] border-t-[#fa243c] rounded-full animate-spin"></div> */}
+          <AnimatedSpinner size={28} color="#fa243c" />
           <p className="text-xs sm:text-sm text-gray-400 font-medium">Loading profile...</p>
         </div>
       </div>
@@ -44,17 +44,17 @@ const ProfilePage = () => {
                 {/* Back Button */}
                 <button
                   onClick={() => navigate(-1)}
-                  className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
+                  className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 hover:text-[#fa243c] transition-colors group"
                 >
                   <div className="">
-                    <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
+                    <ChevronLeftRounded fontSize="large" className="text-[#fa243c] group-hover:text-[#fa243c]" />
                   </div>
                   {/* <span className="text-xs">Back</span> */}
                 </button>
 
                 {/* Page Title - Visible on mobile */}
                 
-                  <h1 className="text-lg font-semibold text-[#FA2E6E]">Profile</h1>
+                  <h1 className="text-lg font-semibold text-[#fa243c]">Profile</h1>
               
               </div>
             </div>

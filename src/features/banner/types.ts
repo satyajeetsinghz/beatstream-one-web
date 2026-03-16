@@ -1,14 +1,25 @@
+// types.ts
+import { Timestamp } from "firebase/firestore";
+
 export interface IBanner {
   id: string;
   title: string;
-  subtitle: string;
-  mediaType: "image" | "video";
-  mediaUrl: string;
-  imageUrl: string;
-  buttonText: string;
-  redirectType: "song" | "artist" | "section";
-  redirectId: string;
+  subtitle?: string;
+  
+  // Media fields - consistent naming
+  mediaType: 'image' | 'video'; // Make required with default
+  imageUrl: string; // Required for fallback
+  mediaUrl?: string; // For videos (optional)
+  
+  redirectType?: "song" | "playlist" | "artist" | "section";
+  redirectId?: string;
+  
+  startDate?: Timestamp;
+  endDate?: Timestamp;
+  
+  order?: number;
+  priority?: number;
+  
   isActive: boolean;
-  order: number;
+  buttonText?: string; // Add this if used
 }
-

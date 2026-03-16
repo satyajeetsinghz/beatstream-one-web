@@ -75,7 +75,7 @@ export const DynamicSection = ({ section }: Props) => {
       {/* Section Header */}
       <div className="flex items-center justify-between mb-4 px-1">
         <div className="flex items-center gap-2">
-          <div className="w-1 h-5 bg-[#FA2E6E] rounded-full"></div>
+          <div className="w-1 h-5 bg-[#fa243c] rounded-full"></div>
           <h2 className="text-lg font-semibold text-gray-900">
             {section.title}
           </h2>
@@ -85,7 +85,7 @@ export const DynamicSection = ({ section }: Props) => {
         </div>
 
         {sectionSongs.length > 8 && (
-          <button className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#FA2E6E] transition-colors">
+          <button className="flex items-center gap-1 text-xs text-gray-400 hover:text-[#fa243c] transition-colors">
             <span className="font-medium">View All</span>
             <ChevronRightIcon fontSize="small" />
           </button>
@@ -147,9 +147,9 @@ export const DynamicSection = ({ section }: Props) => {
       {/* Show More Indicator */}
       {sectionSongs.length > 12 && (
         <div className="text-center mt-3">
-          <button className="text-xs text-gray-400 hover:text-[#FA2E6E] transition-colors group flex items-center justify-center gap-1 mx-auto">
+          <button className="text-xs text-gray-400 hover:text-[#fa243c] transition-colors group flex items-center justify-center gap-1 mx-auto">
             <span>+ {sectionSongs.length - 12} more songs</span>
-            <ChevronRightIcon fontSize="small" className="text-gray-400 group-hover:text-[#FA2E6E]" />
+            <ChevronRightIcon fontSize="small" className="text-gray-400 group-hover:text-[#fa243c]" />
           </button>
         </div>
       )}
@@ -157,7 +157,7 @@ export const DynamicSection = ({ section }: Props) => {
       {/* Browse all link for desktop */}
       {!isMobile && sectionSongs.length > 16 && (
         <div className="text-right mt-2">
-          <button className="text-xs text-gray-400 hover:text-[#FA2E6E] transition-colors">
+          <button className="text-xs text-gray-400 hover:text-[#fa243c] transition-colors">
             Browse all {sectionSongs.length} songs
           </button>
         </div>

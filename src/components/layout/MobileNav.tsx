@@ -29,13 +29,13 @@ const MobileNav = () => {
               key={item.path}
               to={item.path}
               className={`flex flex-col items-center px-3 py-1 rounded-lg transition-colors ${
-                isActive ? 'text-[#FA2E6E]' : 'text-gray-500 hover:text-gray-900'
+                isActive ? 'text-[#fa243c]' : 'text-gray-500 hover:text-gray-900'
               }`}
             >
               <Icon fontSize="medium" />
               <span className="text-[10px] mt-1 font-medium">{item.label}</span>
               {/* {isActive && (
-                <span className="absolute -top-1 w-1 h-1 bg-[#FA2E6E] rounded-full" />
+                <span className="absolute -top-1 w-1 h-1 bg-[#fa243c] rounded-full" />
               )} */}
             </Link>
           );

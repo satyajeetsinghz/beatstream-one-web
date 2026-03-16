@@ -77,8 +77,8 @@ const LikedSongs = () => {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
-                    {/* <div className="w-8 h-8 border-2 border-gray-200 border-t-[#FA2E6E] rounded-full animate-spin"></div> */}
-                    <AnimatedSpinner size={28} color="#ff375f" />
+                    {/* <div className="w-8 h-8 border-2 border-gray-200 border-t-[#fa243c] rounded-full animate-spin"></div> */}
+                    <AnimatedSpinner size={28} color="#fa243c" />
                     <p className="text-sm text-gray-400">Loading your liked songs...</p>
                 </div>
             </div>
@@ -90,12 +90,12 @@ const LikedSongs = () => {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
                 <div className="max-w-md mx-auto px-6 py-12 text-center">
-                    <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#FA2E6E] to-purple-400 rounded-full flex items-center justify-center shadow-md">
+                    <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-[#fa243c] to-purple-400 rounded-full flex items-center justify-center shadow-md">
                         <FavoriteIcon className="text-white" sx={{ fontSize: 36 }} />
                     </div>
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Liked Songs</h1>
                     <p className="text-sm text-gray-500 mb-8">Songs you like will appear here.</p>
-                    <button className="bg-[#FA2E6E] hover:bg-[#E01E5A] text-white px-6 py-2.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-2 shadow-sm">
+                    <button className="bg-[#fa243c] hover:bg-[#E01E5A] text-white px-6 py-2.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-2 shadow-sm">
                         <PlayArrowIcon fontSize="small" />
                         <span>Discover Music</span>
                     </button>
@@ -112,12 +112,12 @@ const LikedSongs = () => {
                 {/* Back Button */}
                 <button
                     onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
+                    className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 hover:text-[#fa243c] transition-colors group"
                 >
                     <div className="">
-                        <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
+                        <ChevronLeftRounded fontSize="large" className="text-[#fa243c] group-hover:text-[#fa243c]" />
                     </div>
-                    <h1 className="text-lg font-semibold text-[#FA2E6E]">Liked</h1>
+                    <h1 className="text-lg font-semibold text-[#fa243c]">Liked</h1>
 
                 </button>
             </div>
@@ -125,7 +125,7 @@ const LikedSongs = () => {
             {/* Top Section - Responsive */}
             <div className="flex flex-col md:flex-row gap-6 md:gap-10">
                 {/* Album Cover - Centered on mobile */}
-                <div className="relative w-40 h-40 sm:w-56 sm:h-56 mx-auto md:mx-0 bg-gradient-to-br from-[#FA2E6E] to-purple-400 rounded-md shadow-xl overflow-hidden flex-shrink-0">
+                <div className="relative w-40 h-40 sm:w-56 sm:h-56 mx-auto md:mx-0 bg-gradient-to-br from-[#fa243c] to-purple-400 rounded-md shadow-xl overflow-hidden flex-shrink-0">
                     <div className="w-full h-full flex items-center justify-center">
                         <FavoriteIcon className="text-white" sx={{ fontSize: { xs: 60, md: 80, lg: 100 } }} />
                     </div>
@@ -140,7 +140,7 @@ const LikedSongs = () => {
                             <ExplicitIcon className="text-gray-400" fontSize="small" />
                         </div>
 
-                        <h2 className="text-[#FA2E6E] text-xl sm:text-2xl mt-0.5 font-medium text-center md:text-left">
+                        <h2 className="text-[#fa243c] text-xl sm:text-2xl mt-0.5 font-medium text-center md:text-left">
                             {user?.name || 'Your Name'}
                         </h2>
 
@@ -162,14 +162,14 @@ const LikedSongs = () => {
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
                         <button
                             onClick={handlePlayAll}
-                            className="w-[35%] md:w-auto bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
+                            className="w-[35%] md:w-auto bg-[#fa243c] hover:bg-[#E01E5A] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
                         >
                             <PlayArrowIcon fontSize="small" /> <span className="text-sm">Play</span>
                         </button>
 
                         <button
                             onClick={handleShufflePlay}
-                            className="w-[35%] md:w-auto bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
+                            className="w-[35%] md:w-auto bg-[#fa243c] hover:bg-[#E01E5A] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
                         >
                             <ShuffleIcon fontSize="small" /> <span className="text-sm">Shuffle</span>
                         </button>
@@ -211,7 +211,7 @@ const LikedSongs = () => {
                                     {formatDuration(song.duration)}
                                 </span>
                                 <button
-                                    className="opacity-0 group-hover:opacity-100 text-[#FA2E6E] hover:text-[#E01E5A] transition"
+                                    className="opacity-0 group-hover:opacity-100 text-[#fa243c] hover:text-[#E01E5A] transition"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         // Handle more options
@@ -230,7 +230,7 @@ const LikedSongs = () => {
                 <div className="fixed bottom-24 left-0 right-0 flex justify-center px-4 z-40">
                     <div className="bg-white/95 backdrop-blur-md shadow-lg rounded-full border border-gray-200 px-4 py-2 flex items-center gap-4">
                         <button onClick={handlePlayAll} className="flex items-center gap-2 text-sm text-gray-700">
-                            <PlayArrowIcon fontSize="small" className="text-[#FA2E6E]" />
+                            <PlayArrowIcon fontSize="small" className="text-[#fa243c]" />
                             <span>Play</span>
                         </button>
                         <div className="w-px h-4 bg-gray-200"></div>

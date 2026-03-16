@@ -1,292 +1,328 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { uploadSong } from "../services/uploadSong.service";
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import ImageIcon from '@mui/icons-material/Image';
-import AudioFileIcon from '@mui/icons-material/AudioFile';
-import CloseIcon from '@mui/icons-material/Close';
-import CircularProgress from '@mui/material/CircularProgress';
-import { BadgeOutlined } from "@mui/icons-material";
 import { useSections } from "@/features/sections/hooks/useSections";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import ImageIcon from "@mui/icons-material/Image";
+import AudioFileIcon from "@mui/icons-material/AudioFile";
+import CloseIcon from "@mui/icons-material/Close";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+
+// ── Bugs fixed ────────────────────────────────────────────────────────────────
+// 1. Object URL memory leak — previous coverPreview URL never revoked when
+//    user uploads multiple covers. Fixed: always revoke before replacing.
+// 2. alert() used for success/error — blocks the thread, broken on mobile.
+//    Fixed: inline toast with auto-dismiss.
+// 3. required attr on hidden <input type="file"> never fires browser validation.
+//    Fixed: manual validation in handleSubmit with inline error hints.
+// 4. No drag-and-drop on upload zones. Fixed: dragover/drop handlers added.
+// 5. audioFile.size accessed without null guard (TypeScript !. assertion).
+//    Fixed: null guards throughout.
+// 6. MUI CircularProgress imported unnecessarily. Replaced with CSS spinner.
+// 7. BadgeOutlined import was unused decorative chrome — removed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ToastType = "success" | "error";
 
 const UploadSongForm = () => {
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [audioPreview, setAudioPreview] = useState<string | null>(null);
-  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const { sections } = useSections();
+  const activeSections = sections.filter((s) => s.isActive);
+
+  const [title,    setTitle]    = useState("");
+  const [artist,   setArtist]   = useState("");
+  const [album,    setAlbum]    = useState("");
+  const [duration, setDuration] = useState("");
   const [selectedSections, setSelectedSections] = useState<string[]>([]);
 
+  const [audioFile,    setAudioFile]    = useState<File | null>(null);
+  const [coverFile,    setCoverFile]    = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(false);
+  const [toast,   setToast]   = useState<{ message: string; type: ToastType } | null>(null);
+  const [dragOver, setDragOver] = useState<"audio" | "cover" | null>(null);
+
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  const showToast = (message: string, type: ToastType) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4500);
+  };
+
+  // ── Cover file — always revoke before replacing ───────────────────────────
+  const setCover = useCallback((file: File | null) => {
+    setCoverPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return file ? URL.createObjectURL(file) : null;
+    });
+    setCoverFile(file);
+    if (!file && coverInputRef.current) coverInputRef.current.value = "";
+  }, []);
+
+  // ── Audio file ────────────────────────────────────────────────────────────
+  const clearAudio = useCallback(() => {
+    setAudioFile(null);
+    if (audioInputRef.current) audioInputRef.current.value = "";
+  }, []);
+
+  // ── File input change ─────────────────────────────────────────────────────
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: 'audio' | 'cover'
+    type: "audio" | "cover"
   ) => {
-    const file = e.target.files?.[0] || null;
-
-    if (type === 'audio') {
-      setAudioFile(file);
-      if (file) {
-        setAudioPreview(file.name);
-      }
-    } else {
-      setCoverFile(file);
-      if (file) {
-        const previewUrl = URL.createObjectURL(file);
-        setCoverPreview(previewUrl);
-      }
-    }
+    const file = e.target.files?.[0] ?? null;
+    if (!file) return;
+    if (type === "audio") setAudioFile(file);
+    else setCover(file);
   };
 
-  const clearFile = (type: 'audio' | 'cover') => {
-    if (type === 'audio') {
-      setAudioFile(null);
-      setAudioPreview(null);
-    } else {
-      setCoverFile(null);
-      if (coverPreview) {
-        URL.revokeObjectURL(coverPreview);
-      }
-      setCoverPreview(null);
-    }
+  // ── Drag + Drop ───────────────────────────────────────────────────────────
+  const handleDrop = (e: React.DragEvent, type: "audio" | "cover") => {
+    e.preventDefault();
+    setDragOver(null);
+    const file = e.dataTransfer.files?.[0] ?? null;
+    if (!file) return;
+    if (type === "cover" && file.type.startsWith("image/")) setCover(file);
+    if (type === "audio" && file.type.startsWith("audio/")) setAudioFile(file);
   };
 
+  // ── Section toggle ────────────────────────────────────────────────────────
+  const toggleSection = (id: string) =>
+    setSelectedSections((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+
+  // ── Reset ─────────────────────────────────────────────────────────────────
+  const resetForm = () => {
+    setTitle(""); setArtist(""); setAlbum(""); setDuration("");
+    clearAudio(); setCover(null);
+    setSelectedSections([]);
+  };
+
+  // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!audioFile || !coverFile) return;
+    if (!title.trim())  return showToast("Song title is required",  "error");
+    if (!artist.trim()) return showToast("Artist name is required", "error");
+    if (!audioFile)     return showToast("Audio file is required",  "error");
+    if (!coverFile)     return showToast("Cover image is required", "error");
 
     setLoading(true);
-
     try {
       await uploadSong(
-        title,
-        artist,
-        audioFile,
-        coverFile,
-        selectedSections
+        title.trim(), artist.trim(),
+        audioFile, coverFile,
+        selectedSections,
+        duration.trim(), album.trim(),
       );
-
-      alert("Song uploaded successfully!");
-      setTitle("");
-      setArtist("");
-      setAudioFile(null);
-      setCoverFile(null);
-      setAudioPreview(null);
-      setSelectedSections([]);
-      if (coverPreview) {
-        URL.revokeObjectURL(coverPreview);
-        setCoverPreview(null);
-      }
+      showToast("Song uploaded successfully!", "success");
+      resetForm();
     } catch (err) {
-      console.error(err);
-      alert("Upload failed");
+      console.error("Upload failed:", err);
+      showToast("Upload failed. Please try again.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleSection = (id: string) => {
-    setSelectedSections((prev) =>
-      prev.includes(id)
-        ? prev.filter((sid) => sid !== id)
-        : [...prev, id]
-    );
-  };
+  const formatSize = (bytes: number) =>
+    bytes > 1_048_576
+      ? `${(bytes / 1_048_576).toFixed(1)} MB`
+      : `${(bytes / 1024).toFixed(0)} KB`;
+
+  const canSubmit = !!(title.trim() && artist.trim() && audioFile && coverFile && !loading);
+
+  // ── Upload zone shared classes ────────────────────────────────────────────
+  const zoneBase = "h-[152px] rounded-[12px] border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-all";
+  const zoneIdle = "border-[#e5e5ea] bg-[#fafafa] hover:border-[#fa243c] hover:bg-[#fff8f9]";
+  const zoneDrag = "border-[#fa243c] bg-[#fff0f3]";
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
-      <div className="flex items-start justify-between mb-8">
+    <div className="w-full bg-white rounded-[18px] border border-[#e5e5ea] shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+
+      {/* ── Header ── */}
+      <div className="px-8 pt-7 pb-5 border-b border-[#f5f5f7] flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Upload New Song</h2>
-          <p className="text-sm text-gray-500 mt-1">Add a new track to your music library</p>
+          <h2 className="text-[clamp(22px,2.5vw,28px)] font-bold text-[#1d1d1f] tracking-[-0.6px] leading-[1.1] mb-1">
+            Upload New Song
+          </h2>
+          <p className="text-[14px] text-[#6e6e73] m-0">
+            Add a new track to your music library
+          </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          <BadgeOutlined fontSize="small" className="text-gray-400" />
-          <span>Fill all fields to upload</span>
-        </div>
+        <span className="text-[12px] text-[#aeaeb2] whitespace-nowrap pb-0.5">* Required</span>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Horizontal Grid Layout */}
-        <div className="grid grid-cols-2 gap-6">
-          {/* Left Column - Song Details */}
-          <div className="space-y-6">
+      {/* ── Toast ── */}
+      {toast && (
+        <div className={`mx-8 mt-5 flex items-center gap-3 px-4 py-3 rounded-[12px] border text-[13px] font-medium ${
+          toast.type === "success"
+            ? "bg-[#f0fdf4] border-[#bbf7d0] text-[#166534]"
+            : "bg-[#fff0f3] border-[#ffd1d9] text-[#fa243c]"
+        }`}>
+          {toast.type === "success" ? (
+            <CheckCircleOutlineIcon sx={{ fontSize: 16 }} />
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M7 4v3.5M7 9.5v.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          )}
+          {toast.message}
+        </div>
+      )}
+
+      {/* ── Form ── */}
+      <form onSubmit={handleSubmit} noValidate>
+        <div className="p-8 grid grid-cols-2 gap-8">
+
+          {/* Left: text fields + sections */}
+          <div className="flex flex-col gap-5">
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Song Title
+              <label className="block text-[11px] font-semibold text-[#aeaeb2] uppercase tracking-[0.6px] mb-2">
+                Song Title *
               </label>
-              <input
-                type="text"
+              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Bohemian Rhapsody"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 outline-none transition-colors text-gray-900 placeholder:text-gray-400"
-                required
+                className="w-full px-4 py-2.5 bg-white border border-[#e5e5ea] rounded-[10px] text-[13px] text-[#1d1d1f] outline-none transition-all placeholder:text-[#aeaeb2] focus:border-[#fa243c] focus:shadow-[0_0_0_3px_rgba(255,55,95,0.1)]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Artist
+              <label className="block text-[11px] font-semibold text-[#aeaeb2] uppercase tracking-[0.6px] mb-2">
+                Artist *
               </label>
-              <input
-                type="text"
+              <input type="text" value={artist} onChange={(e) => setArtist(e.target.value)}
                 placeholder="e.g. Queen"
-                value={artist}
-                onChange={(e) => setArtist(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 outline-none transition-colors text-gray-900 placeholder:text-gray-400"
-                required
+                className="w-full px-4 py-2.5 bg-white border border-[#e5e5ea] rounded-[10px] text-[13px] text-[#1d1d1f] outline-none transition-all placeholder:text-[#aeaeb2] focus:border-[#fa243c] focus:shadow-[0_0_0_3px_rgba(255,55,95,0.1)]"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Genre (Optional)
-              </label>
-              <select className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-gray-400 focus:ring-1 focus:ring-gray-400 outline-none transition-colors text-gray-900 bg-white">
-                <option value="">Select genre</option>
-                <option value="pop">Pop</option>
-                <option value="rock">Rock</option>
-                <option value="hiphop">Hip Hop</option>
-                <option value="jazz">Jazz</option>
-                <option value="classical">Classical</option>
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#aeaeb2] uppercase tracking-[0.6px] mb-2">Album</label>
+                <input type="text" value={album} onChange={(e) => setAlbum(e.target.value)}
+                  placeholder="e.g. A Night at the Opera"
+                  className="w-full px-4 py-2.5 bg-white border border-[#e5e5ea] rounded-[10px] text-[13px] text-[#1d1d1f] outline-none transition-all placeholder:text-[#aeaeb2] focus:border-[#fa243c] focus:shadow-[0_0_0_3px_rgba(255,55,95,0.1)]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#aeaeb2] uppercase tracking-[0.6px] mb-2">Duration</label>
+                <input type="text" value={duration} onChange={(e) => setDuration(e.target.value)}
+                  placeholder="e.g. 3:45"
+                  className="w-full px-4 py-2.5 bg-white border border-[#e5e5ea] rounded-[10px] text-[13px] text-[#1d1d1f] outline-none transition-all placeholder:text-[#aeaeb2] focus:border-[#fa243c] focus:shadow-[0_0_0_3px_rgba(255,55,95,0.1)]"
+                />
+              </div>
             </div>
 
-            {/* Section Selection - Moved to Left Column */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Add to Sections
-              </label>
-
-              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3 bg-gray-50">
-                {sections.filter((section) => section.isActive).length > 0 ? (
-                  sections
-                    .filter((section) => section.isActive)
-                    .map((section) => {
-                      const isSelected = selectedSections.includes(section.id);
-                      return (
-                        <button
-                          type="button"
-                          key={section.id}
-                          onClick={() => toggleSection(section.id)}
-                          className={`text-xs px-3 py-2 rounded-lg border transition-all ${
-                            isSelected
-                              ? "bg-[#FA2E6E] text-white border-[#FA2E6E]"
-                              : "bg-white text-gray-700 border-gray-200 hover:border-gray-400"
-                          }`}
-                        >
-                          {section.title}
-                        </button>
-                      );
-                    })
-                ) : (
-                  <p className="text-xs text-gray-400 col-span-2 text-center py-2">
-                    No active sections available
-                  </p>
+              <label className="block text-[11px] font-semibold text-[#aeaeb2] uppercase tracking-[0.6px] mb-2">
+                Sections
+                {selectedSections.length > 0 && (
+                  <span className="ml-2 text-[#fa243c] normal-case tracking-normal">{selectedSections.length} selected</span>
                 )}
-              </div>
-
-              {selectedSections.length === 0 && (
-                <p className="text-xs text-gray-400 mt-2">
-                  Optional: Select sections where this song should appear
-                </p>
-              )}
-              
-              {selectedSections.length > 0 && (
-                <p className="text-xs text-[#FA2E6E] mt-2">
-                  {selectedSections.length} {selectedSections.length === 1 ? 'section' : 'sections'} selected
-                </p>
+              </label>
+              {activeSections.length === 0 ? (
+                <p className="text-[12px] text-[#aeaeb2]">No active sections available</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {activeSections.map((section) => {
+                    const sel = selectedSections.includes(section.id);
+                    return (
+                      <button type="button" key={section.id} onClick={() => toggleSection(section.id)}
+                        className={`px-3 py-1.5 rounded-[980px] text-[12px] font-semibold border transition-all ${
+                          sel
+                            ? "bg-[#fa243c] text-white border-[#fa243c]"
+                            : "bg-white text-[#6e6e73] border-[#e5e5ea] hover:border-[#fa243c] hover:text-[#fa243c]"
+                        }`}
+                      >
+                        {section.title}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>
 
-          {/* Right Column - File Uploads */}
-          <div className="space-y-6">
-            {/* Cover Image Upload */}
+          {/* Right: file uploads */}
+          <div className="flex flex-col gap-5">
+
+            {/* Cover */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cover Image
+              <label className="block text-[11px] font-semibold text-[#aeaeb2] uppercase tracking-[0.6px] mb-2">
+                Cover Image *
               </label>
               {!coverPreview ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors h-40 flex items-center justify-center">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, 'cover')}
-                    className="hidden"
-                    id="cover-upload"
-                    required
-                  />
-                  <label
-                    htmlFor="cover-upload"
-                    className="flex flex-col items-center cursor-pointer"
-                  >
-                    <ImageIcon className="text-gray-400 mb-2" />
-                    <span className="text-xs text-gray-600 font-medium text-center">Click to upload cover</span>
-                    <span className="text-xs text-gray-400 mt-1">PNG, JPG, GIF</span>
-                  </label>
+                <div
+                  onDrop={(e) => handleDrop(e, "cover")}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver("cover"); }}
+                  onDragLeave={() => setDragOver(null)}
+                  onClick={() => coverInputRef.current?.click()}
+                  className={`${zoneBase} ${dragOver === "cover" ? zoneDrag : zoneIdle}`}
+                >
+                  <input ref={coverInputRef} type="file" accept="image/*"
+                    onChange={(e) => handleFileChange(e, "cover")} className="hidden" />
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#e5e5ea] flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                    <ImageIcon sx={{ fontSize: 18 }} className="text-[#aeaeb2]" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[13px] font-medium text-[#1d1d1f]">Drop or click to upload</p>
+                    <p className="text-[11px] text-[#aeaeb2] mt-0.5">PNG, JPG, GIF</p>
+                  </div>
                 </div>
               ) : (
-                <div className="relative rounded-lg overflow-hidden border border-gray-200 h-40">
-                  <img
-                    src={coverPreview}
-                    alt="Cover preview"
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => clearFile('cover')}
-                    className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
-                  >
-                    <CloseIcon fontSize="small" className="text-gray-600" />
+                <div className="h-[152px] rounded-[12px] overflow-hidden border border-[#e5e5ea] relative group">
+                  <img src={coverPreview} alt="Cover preview" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all" />
+                  <button type="button" onClick={() => setCover(null)}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow-md flex items-center justify-center text-[#6e6e73] hover:text-[#fa243c] transition-colors opacity-0 group-hover:opacity-100">
+                    <CloseIcon sx={{ fontSize: 13 }} />
                   </button>
+                  <span className="absolute bottom-2 left-2 bg-black/50 text-white text-[10px] font-semibold px-2 py-0.5 rounded-[4px]">
+                    Cover set ✓
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* Audio File Upload */}
+            {/* Audio */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Audio File
+              <label className="block text-[11px] font-semibold text-[#aeaeb2] uppercase tracking-[0.6px] mb-2">
+                Audio File *
               </label>
-              {!audioPreview ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors h-40 flex items-center justify-center">
-                  <input
-                    type="file"
-                    accept="audio/*"
-                    onChange={(e) => handleFileChange(e, 'audio')}
-                    className="hidden"
-                    id="audio-upload"
-                    required
-                  />
-                  <label
-                    htmlFor="audio-upload"
-                    className="flex flex-col items-center cursor-pointer"
-                  >
-                    <AudioFileIcon className="text-gray-400 mb-2" />
-                    <span className="text-xs text-gray-600 font-medium text-center">Click to upload audio</span>
-                    <span className="text-xs text-gray-400 mt-1">MP3, WAV, FLAC</span>
-                  </label>
+              {!audioFile ? (
+                <div
+                  onDrop={(e) => handleDrop(e, "audio")}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver("audio"); }}
+                  onDragLeave={() => setDragOver(null)}
+                  onClick={() => audioInputRef.current?.click()}
+                  className={`${zoneBase} ${dragOver === "audio" ? zoneDrag : zoneIdle}`}
+                >
+                  <input ref={audioInputRef} type="file" accept="audio/*"
+                    onChange={(e) => handleFileChange(e, "audio")} className="hidden" />
+                  <div className="w-10 h-10 rounded-full bg-white border border-[#e5e5ea] flex items-center justify-center shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                    <AudioFileIcon sx={{ fontSize: 18 }} className="text-[#aeaeb2]" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[13px] font-medium text-[#1d1d1f]">Drop or click to upload</p>
+                    <p className="text-[11px] text-[#aeaeb2] mt-0.5">MP3, WAV, FLAC, AAC</p>
+                  </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 h-40">
-                  <div className="flex flex-col items-center gap-2 text-center">
-                    <AudioFileIcon className="text-gray-500" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 truncate max-w-[150px]">{audioPreview}</p>
-                      <p className="text-xs text-gray-500">
-                        {(audioFile!.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                    </div>
+                <div className="h-[152px] rounded-[12px] border border-[#e5e5ea] bg-[#fafafa] flex flex-col items-center justify-center gap-3 px-5 relative">
+                  <div className="w-10 h-10 rounded-full bg-[#fff0f3] border border-[#ffd1d9] flex items-center justify-center">
+                    <AudioFileIcon sx={{ fontSize: 18 }} className="text-[#fa243c]" />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => clearFile('audio')}
-                    className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                  >
-                    <CloseIcon fontSize="small" className="text-gray-500" />
+                  <div className="text-center min-w-0 w-full">
+                    <p className="text-[13px] font-semibold text-[#1d1d1f] truncate px-8">{audioFile.name}</p>
+                    <p className="text-[11px] text-[#aeaeb2] mt-0.5">{formatSize(audioFile.size)}</p>
+                  </div>
+                  <button type="button" onClick={clearAudio}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white border border-[#e5e5ea] flex items-center justify-center text-[#aeaeb2] hover:text-[#fa243c] hover:border-[#ffd1d9] transition-all shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+                    <CloseIcon sx={{ fontSize: 12 }} />
                   </button>
                 </div>
               )}
@@ -294,25 +330,35 @@ const UploadSongForm = () => {
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="pt-6 border-t border-gray-200">
-          <button
-            type="submit"
-            disabled={loading || !audioFile || !coverFile}
-            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <CircularProgress size={20} className="text-white" />
-                <span>Uploading...</span>
-              </>
-            ) : (
-              <>
-                <CloudUploadIcon fontSize="small" />
-                <span>Upload Song</span>
-              </>
+        {/* ── Submit ── */}
+        <div className="px-8 pb-8 pt-0">
+          <div className="pt-6 border-t border-[#f5f5f7]">
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-[980px] bg-[#fa243c] text-white text-[15px] font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-[#fa243c] active:enabled:scale-[0.99]"
+            >
+              {loading ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Uploading…
+                </>
+              ) : (
+                <>
+                  <CloudUploadIcon sx={{ fontSize: 18 }} />
+                  Upload Song
+                </>
+              )}
+            </button>
+            {/* Contextual hint below button */}
+            {!canSubmit && !loading && (
+              <p className="text-center text-[12px] text-[#aeaeb2] mt-3">
+                {!title.trim() || !artist.trim()
+                  ? "Fill in title and artist to continue"
+                  : "Upload both audio and cover files to continue"}
+              </p>
             )}
-          </button>
+          </div>
         </div>
       </form>
     </div>

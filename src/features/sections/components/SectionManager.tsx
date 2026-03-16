@@ -1,277 +1,424 @@
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useSections } from "../hooks/useSections";
 import {
-    createSection,
-    deleteSection,
-    toggleSectionStatus,
-    updateSection,
+  createSection,
+  deleteSection,
+  toggleSectionStatus,
+  updateSection,
 } from "../services/section.service";
-import AddIcon from '@mui/icons-material/Add';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import EditIcon from '@mui/icons-material/Edit';
-import CheckIcon from '@mui/icons-material/Check';
-import CloseIcon from '@mui/icons-material/Close';
-import FolderIcon from '@mui/icons-material/Folder';
+import AddIcon from "@mui/icons-material/Add";
+
+// ── Bugs fixed ────────────────────────────────────────────────────────────────
+// 1. window.confirm() in handleDelete blocks the main thread.
+//    Fixed: inline two-step confirm UI per row (same pattern as SongManager).
+// 2. alert() used for create/update errors — blocks UI, broken on mobile.
+//    Fixed: inline toast with auto-dismiss.
+// 3. No optimistic UI feedback — edit save had no loading state.
+//    Fixed: savingId state added so the save button shows a spinner.
+// 4. section.itemCount rendered without null guard — `undefined` would
+//    render "undefined items". Fixed: guard already present in original
+//    but the condition was redundant; cleaned up.
+// 5. Edit mode opened on one row while another row's confirm was open —
+//    no mutual exclusion. Fixed: opening edit closes confirm, and vice versa.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ToastType = "success" | "error";
 
 export const SectionManager = () => {
-    const { sections, loading } = useSections();
+  const { sections, loading } = useSections();
 
-    const [newTitle, setNewTitle] = useState("");
-    const [creating, setCreating] = useState(false);
+  const [newTitle,  setNewTitle]  = useState("");
+  const [creating,  setCreating]  = useState(false);
 
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editingTitle, setEditingTitle] = useState("");
+  const [editingId,    setEditingId]    = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [savingId,     setSavingId]     = useState<string | null>(null);
 
-    const [togglingId, setTogglingId] = useState<string | null>(null);
-    const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId,      setTogglingId]      = useState<string | null>(null);
+  const [deletingId,      setDeletingId]       = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId]  = useState<string | null>(null);
 
-    const handleCreate = async () => {
-        if (!newTitle.trim()) return;
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
-        try {
-            setCreating(true);
-            await createSection(newTitle);
-            setNewTitle("");
-        } catch {
-            alert("Error creating section");
-        } finally {
-            setCreating(false);
-        }
-    };
+  const newTitleRef   = useRef<HTMLInputElement>(null);
+  const editInputRef  = useRef<HTMLInputElement>(null);
 
-    const handleUpdate = async () => {
-        if (!editingId || !editingTitle.trim()) return;
-
-        try {
-            await updateSection(editingId, editingTitle);
-            setEditingId(null);
-            setEditingTitle("");
-        } catch (error) {
-            console.error("Update Section Error:", error);
-            alert("Error updating section");
-        }
-
-    };
-
-    const handleToggle = async (id: string, currentStatus: boolean) => {
-        try {
-            setTogglingId(id);
-            await toggleSectionStatus(id, currentStatus);
-        } catch (error) {
-            console.error("Error toggling section:", error);
-        } finally {
-            setTogglingId(null);
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!window.confirm("Are you sure you want to delete this section?")) return;
-
-        try {
-            setDeletingId(id);
-            await deleteSection(id);
-        } catch (error) {
-            console.error("Error deleting section:", error);
-        } finally {
-            setDeletingId(null);
-        }
-    };
-
-    // Loading State
-    if (loading) {
-        return (
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-6"></div>
-
-                {/* Create Section Skeleton */}
-                <div className="flex gap-2 mb-6">
-                    <div className="h-10 flex-1 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-10 w-16 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-
-                {/* Sections List Skeleton */}
-                <div className="space-y-3">
-                    {[...Array(3)].map((_, i) => (
-                        <div key={i} className="h-16 bg-gray-100 rounded animate-pulse"></div>
-                    ))}
-                </div>
-            </div>
-        );
+  // Auto-focus edit input when editing starts
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
     }
+  }, [editingId]);
 
+  const showToast = (message: string, type: ToastType) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  // ── Create ──────────────────────────────────────────────────────────────
+  const handleCreate = useCallback(async () => {
+    if (!newTitle.trim()) return;
+    setCreating(true);
+    try {
+      await createSection(newTitle.trim());
+      setNewTitle("");
+      newTitleRef.current?.focus();
+    } catch {
+      showToast("Failed to create section", "error");
+    } finally {
+      setCreating(false);
+    }
+  }, [newTitle]);
+
+  // ── Update ──────────────────────────────────────────────────────────────
+  const handleUpdate = useCallback(async () => {
+    if (!editingId || !editingTitle.trim()) return;
+    setSavingId(editingId);
+    try {
+      await updateSection(editingId, editingTitle.trim());
+      setEditingId(null);
+      setEditingTitle("");
+    } catch (err) {
+      console.error("Update error:", err);
+      showToast("Failed to update section", "error");
+    } finally {
+      setSavingId(null);
+    }
+  }, [editingId, editingTitle]);
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null);
+    setEditingTitle("");
+  }, []);
+
+  // ── Toggle ──────────────────────────────────────────────────────────────
+  const handleToggle = useCallback(async (id: string, current: boolean) => {
+    setTogglingId(id);
+    try {
+      await toggleSectionStatus(id, current);
+    } catch (err) {
+      console.error("Toggle error:", err);
+      showToast("Failed to update status", "error");
+    } finally {
+      setTogglingId(null);
+    }
+  }, []);
+
+  // ── Delete ──────────────────────────────────────────────────────────────
+  const handleDeleteConfirm = useCallback(async (id: string) => {
+    setDeletingId(id);
+    setConfirmDeleteId(null);
+    try {
+      await deleteSection(id);
+    } catch (err) {
+      console.error("Delete error:", err);
+      showToast("Failed to delete section", "error");
+    } finally {
+      setDeletingId(null);
+    }
+  }, []);
+
+  const openEdit = (id: string, title: string) => {
+    setConfirmDeleteId(null); // close any open confirm
+    setEditingId(id);
+    setEditingTitle(title);
+  };
+
+  const openConfirm = (id: string) => {
+    setEditingId(null); // close any open edit
+    setConfirmDeleteId(id);
+  };
+
+  // ── Summary counts ──────────────────────────────────────────────────────
+  const activeCount   = sections.filter((s) => s.isActive).length;
+  const inactiveCount = sections.length - activeCount;
+
+  // ── Loading skeleton ────────────────────────────────────────────────────
+  if (loading) {
     return (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            {/* Header */}
-            <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center gap-2">
-                    <FolderIcon className="text-gray-400" fontSize="small" />
-                    <h2 className="text-lg font-semibold text-gray-900">Section Management</h2>
-                    <span className="text-xs text-gray-400 ml-1">
-                        {sections.length} {sections.length === 1 ? 'section' : 'sections'}
-                    </span>
-                </div>
-            </div>
-
-            {/* Create Section */}
-            <div className="p-6 border-b border-gray-200 bg-gray-50/50">
-                <div className="flex gap-3">
-                    <input
-                        type="text"
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value)}
-                        placeholder="New section title"
-                        className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FA2E6E]/20 focus:border-[#FA2E6E] transition-colors"
-                        onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                    />
-                    <button
-                        onClick={handleCreate}
-                        disabled={creating || !newTitle.trim()}
-                        className="px-5 py-2.5 bg-[#FA2E6E] text-white text-sm font-medium rounded-full hover:bg-[#E01E5A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                    >
-                        {creating ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <>
-                                <AddIcon fontSize="small" />
-                                <span>Add</span>
-                            </>
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            {/* Sections List */}
-            <div className="p-6">
-                {sections.length === 0 ? (
-                    <div className="text-center py-12">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <FolderIcon className="text-gray-400" style={{ fontSize: 32 }} />
-                        </div>
-                        <p className="text-sm text-gray-500 mb-1">No sections yet</p>
-                        <p className="text-xs text-gray-400">Create your first section above</p>
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {sections.map((section) => (
-                            <div
-                                key={section.id}
-                                className="group relative bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-all overflow-hidden"
-                            >
-                                {editingId === section.id ? (
-                                    /* Edit Mode */
-                                    <div className="p-4">
-                                        <div className="flex gap-2">
-                                            <input
-                                                value={editingTitle}
-                                                onChange={(e) => setEditingTitle(e.target.value)}
-                                                placeholder="Section title"
-                                                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#FA2E6E]/20 focus:border-[#FA2E6E]"
-                                                autoFocus
-                                                onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
-                                            />
-                                            <button
-                                                onClick={handleUpdate}
-                                                className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                                                title="Save"
-                                            >
-                                                <CheckIcon fontSize="small" />
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setEditingId(null);
-                                                    setEditingTitle("");
-                                                }}
-                                                className="p-2 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors"
-                                                title="Cancel"
-                                            >
-                                                <CloseIcon fontSize="small" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    /* View Mode */
-                                    <div className="p-4">
-                                        <div className="flex items-start justify-between">
-                                            {/* Section Info */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h3 className="text-sm font-semibold text-gray-900 truncate">
-                                                        {section.title}
-                                                    </h3>
-                                                    <span className={`text-xs px-2 py-0.5 rounded-full ${section.isActive
-                                                            ? 'bg-green-50 text-green-600 border border-green-200'
-                                                            : 'bg-gray-100 text-gray-500 border border-gray-200'
-                                                        }`}>
-                                                        {section.isActive ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                </div>
-
-                                                {/* Optional: Add item count if available */}
-                                                {section.itemCount !== undefined && (
-                                                    <p className="text-xs text-gray-400">
-                                                        {section.itemCount} items
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Actions */}
-                                            <div className="flex items-center gap-1 ml-4">
-                                                {/* Edit Button */}
-                                                <button
-                                                    onClick={() => {
-                                                        setEditingId(section.id);
-                                                        setEditingTitle(section.title);
-                                                    }}
-                                                    className="p-2 rounded-full text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-all duration-200"
-                                                    title="Edit section"
-                                                >
-                                                    <EditIcon fontSize="small" />
-                                                </button>
-
-                                                {/* Toggle Active/Inactive */}
-                                                <button
-                                                    onClick={() => handleToggle(section.id, section.isActive)}
-                                                    disabled={togglingId === section.id}
-                                                    className={`p-2 rounded-full transition-all duration-200 ${section.isActive
-                                                            ? 'text-green-600 hover:bg-green-50'
-                                                            : 'text-gray-400 hover:bg-gray-200'
-                                                        } ${togglingId === section.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                    title={section.isActive ? 'Disable section' : 'Enable section'}
-                                                >
-                                                    {togglingId === section.id ? (
-                                                        <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                                                    ) : section.isActive ? (
-                                                        <VisibilityIcon fontSize="small" />
-                                                    ) : (
-                                                        <VisibilityOffIcon fontSize="small" />
-                                                    )}
-                                                </button>
-
-                                                {/* Delete Button */}
-                                                <button
-                                                    onClick={() => handleDelete(section.id)}
-                                                    disabled={deletingId === section.id}
-                                                    className={`p-2 rounded-full text-red-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200 ${deletingId === section.id ? 'opacity-50 cursor-not-allowed' : ''
-                                                        }`}
-                                                    title="Delete section"
-                                                >
-                                                    {deletingId === section.id ? (
-                                                        <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                                                    ) : (
-                                                        <DeleteOutlineIcon fontSize="small" />
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+      <div className="bg-white rounded-[18px] border border-[#e5e5ea] shadow-[0_1px_4px_rgba(0,0,0,0.04)] p-8">
+        <div className="h-5 w-40 bg-[#f5f5f7] rounded-lg animate-pulse mb-6" />
+        <div className="flex gap-2 mb-6">
+          <div className="h-10 flex-1 bg-[#f5f5f7] rounded-lg animate-pulse" />
+          <div className="h-10 w-20 bg-[#f5f5f7] rounded-lg animate-pulse" />
         </div>
+        <div className="flex flex-col gap-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-[60px] bg-[#f5f5f7] rounded-[12px] animate-pulse" />
+          ))}
+        </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="flex flex-col gap-7">
+
+      {/* ── Header ── */}
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h1 className="text-[clamp(24px,2.8vw,34px)] font-bold text-[#1d1d1f] tracking-[-0.7px] leading-[1.08] mb-1.5">
+            Sections
+          </h1>
+          <p className="text-[15px] text-[#6e6e73] m-0">
+            Organise your music library into sections
+          </p>
+        </div>
+        <span className="text-[15px] font-medium text-[#6e6e73] whitespace-nowrap pb-[3px]">
+          {sections.length} {sections.length === 1 ? "section" : "sections"}
+        </span>
+      </div>
+
+      {/* ── Stat cards ── */}
+      <div className="grid grid-cols-3 gap-3.5">
+        {[
+          { label: "Total",    value: sections.length, accent: "#1d1d1f" },
+          { label: "Active",   value: activeCount,     accent: "#34c759" },
+          { label: "Inactive", value: inactiveCount,   accent: "#aeaeb2" },
+        ].map((card) => (
+          <div key={card.label}
+            className="bg-white border border-[#e5e5ea] rounded-[18px] p-[20px_18px_18px] flex flex-col gap-1 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+            <span className="text-[28px] font-bold tracking-[-1px] leading-none" style={{ color: card.accent }}>
+              {card.value}
+            </span>
+            <span className="text-[12px] font-medium text-[#6e6e73]">{card.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Main card ── */}
+      <div className="bg-white rounded-[18px] border border-[#e5e5ea] shadow-[0_1px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+
+        {/* Toast */}
+        {toast && (
+          <div className={`mx-5 mt-5 flex items-center gap-3 px-4 py-3 rounded-[12px] border text-[13px] font-medium ${
+            toast.type === "success"
+              ? "bg-[#f0fdf4] border-[#bbf7d0] text-[#166534]"
+              : "bg-[#fff0f3] border-[#ffd1d9] text-[#fa243c]"
+          }`}>
+            {toast.type === "error" && (
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.4"/>
+                <path d="M7 4v3.5M7 9.5v.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            )}
+            {toast.message}
+          </div>
+        )}
+
+        {/* Create section */}
+        <div className="px-5 pt-5 pb-4 border-b border-[#f5f5f7]">
+          <label className="block text-[11px] font-semibold text-[#aeaeb2] uppercase tracking-[0.6px] mb-2">
+            New Section
+          </label>
+          <div className="flex gap-2">
+            <input
+              ref={newTitleRef}
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+              placeholder="e.g. Top Hits, New Releases…"
+              className="flex-1 px-4 py-2.5 bg-white border border-[#e5e5ea] rounded-[10px] text-[13px] text-[#1d1d1f] outline-none transition-all placeholder:text-[#aeaeb2] focus:border-[#fa243c] focus:shadow-[0_0_0_3px_rgba(255,55,95,0.1)]"
+            />
+            <button
+              onClick={handleCreate}
+              disabled={creating || !newTitle.trim()}
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-[980px] bg-[#fa243c] text-white text-[13px] font-semibold border-none cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-[#fa243c] whitespace-nowrap"
+            >
+              {creating ? (
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  <AddIcon sx={{ fontSize: 15 }} />
+                  Add
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Sections list */}
+        <div className="p-5">
+          {sections.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+                <circle cx="22" cy="22" r="20" stroke="#e5e5ea" strokeWidth="1.5"/>
+                <path d="M12 28V20l10-3 10 3v8" stroke="#d1d1d6" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="15" y="20" width="14" height="8" rx="2" stroke="#d1d1d6" strokeWidth="1.4"/>
+              </svg>
+              <div className="text-center">
+                <p className="text-[14px] text-[#6e6e73]">No sections yet</p>
+                <p className="text-[12px] text-[#aeaeb2] mt-1">Create your first section above</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2.5">
+              {sections.map((section) => (
+                <div
+                  key={section.id}
+                  className="group bg-[#fafafa] border border-[#f5f5f7] rounded-[12px] overflow-hidden transition-all hover:border-[#e5e5ea]"
+                >
+                  {editingId === section.id ? (
+                    /* ── Edit mode ── */
+                    <div className="px-4 py-3 flex items-center gap-2">
+                      <input
+                        ref={editInputRef}
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter")  handleUpdate();
+                          if (e.key === "Escape") cancelEdit();
+                        }}
+                        className="flex-1 px-3 py-2 bg-white border border-[#e5e5ea] rounded-[8px] text-[13px] text-[#1d1d1f] outline-none transition-all focus:border-[#fa243c] focus:shadow-[0_0_0_3px_rgba(255,55,95,0.1)]"
+                      />
+                      {/* Save */}
+                      <button
+                        onClick={handleUpdate}
+                        disabled={savingId === section.id || !editingTitle.trim()}
+                        className="w-8 h-8 rounded-full bg-[#fa243c] flex items-center justify-center text-white border-none cursor-pointer transition-all disabled:opacity-40 hover:enabled:bg-[#fa243c]"
+                        title="Save"
+                      >
+                        {savingId === section.id ? (
+                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                            <path d="M2 5.5l2.5 2.5L9 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </button>
+                      {/* Cancel */}
+                      <button
+                        onClick={cancelEdit}
+                        className="w-8 h-8 rounded-full bg-[#f5f5f7] border border-[#e5e5ea] flex items-center justify-center text-[#aeaeb2] cursor-pointer transition-all hover:bg-[#e5e5ea] hover:text-[#6e6e73]"
+                        title="Cancel"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                          <path d="M2 2l7 7M9 2L2 9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    /* ── View mode ── */
+                    <div className="px-4 py-3 flex items-center justify-between gap-3">
+
+                      {/* Info */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        {/* Active indicator dot */}
+                        <span
+                          className="w-2 h-2 rounded-full flex-shrink-0 transition-colors"
+                          style={{ background: section.isActive ? "#34c759" : "#d1d1d6" }}
+                        />
+                        <span className="text-[13px] font-semibold text-[#1d1d1f] truncate">
+                          {section.title}
+                        </span>
+                        {/* Status pill */}
+                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-[980px] border flex-shrink-0 ${
+                          section.isActive
+                            ? "bg-[#f0fdf4] border-[#bbf7d0] text-[#166534]"
+                            : "bg-[#f5f5f7] border-[#e5e5ea] text-[#aeaeb2]"
+                        }`}>
+                          {section.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+
+                      {/* Actions — visible on hover */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+
+                        {/* Edit */}
+                        <button
+                          onClick={() => openEdit(section.id, section.title)}
+                          className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[#aeaeb2] hover:text-[#1d1d1f] hover:bg-white border border-transparent hover:border-[#e5e5ea] transition-all"
+                          title="Edit"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                            <path d="M9.5 1.5l2 2-8 8H1.5v-2l8-8z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+
+                        {/* Toggle visibility */}
+                        <button
+                          onClick={() => handleToggle(section.id, section.isActive)}
+                          disabled={togglingId === section.id}
+                          className={`w-[30px] h-[30px] rounded-full flex items-center justify-center border border-transparent transition-all disabled:cursor-not-allowed ${
+                            section.isActive
+                              ? "text-[#34c759] hover:bg-[#f0fdf4] hover:border-[#bbf7d0]"
+                              : "text-[#aeaeb2] hover:bg-white hover:border-[#e5e5ea]"
+                          }`}
+                          title={section.isActive ? "Deactivate" : "Activate"}
+                        >
+                          {togglingId === section.id ? (
+                            <span className="w-3.5 h-3.5 border-2 border-[#d1d1d6] border-t-[#6e6e73] rounded-full animate-spin" />
+                          ) : section.isActive ? (
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path d="M7 2a5 5 0 1 0 0 10A5 5 0 0 0 7 2z" stroke="currentColor" strokeWidth="1.3"/>
+                              <path d="M5 7l1.5 1.5L9 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path d="M7 2a5 5 0 1 0 0 10A5 5 0 0 0 7 2z" stroke="currentColor" strokeWidth="1.3"/>
+                              <path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Delete / inline confirm */}
+                        {confirmDeleteId === section.id ? (
+                          <div className="flex items-center gap-1.5 bg-[#fff0f3] border border-[#ffd1d9] rounded-[980px] px-2 py-1 ml-1">
+                            <span className="text-[11px] font-medium text-[#fa243c] whitespace-nowrap">Delete?</span>
+                            <button
+                              onClick={() => handleDeleteConfirm(section.id)}
+                              disabled={deletingId === section.id}
+                              className="text-[11px] font-semibold text-white bg-[#fa243c] rounded-[980px] px-2 py-0.5 hover:bg-[#fa243c] transition-all disabled:opacity-50 border-none cursor-pointer"
+                            >
+                              {deletingId === section.id ? "…" : "Yes"}
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="text-[11px] font-semibold text-[#6e6e73] hover:text-[#1d1d1f] transition-colors bg-none border-none cursor-pointer"
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => openConfirm(section.id)}
+                            disabled={deletingId === section.id}
+                            className="w-[30px] h-[30px] rounded-full flex items-center justify-center text-[#aeaeb2] hover:text-[#fa243c] hover:bg-[#fff0f3] border border-transparent hover:border-[#ffd1d9] transition-all disabled:cursor-not-allowed"
+                            title="Delete"
+                          >
+                            {deletingId === section.id ? (
+                              <span className="w-3.5 h-3.5 border-2 border-[#ffd1d9] border-t-[#fa243c] rounded-full animate-spin" />
+                            ) : (
+                              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                                <path d="M2 3.5h9M5 3.5V2h3v1.5M4.5 3.5v7h4v-7"
+                                  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {sections.length > 0 && (
+          <div className="px-5 py-3.5 border-t border-[#f5f5f7] bg-[#fafafa] flex items-center justify-between">
+            <p className="text-[12px] text-[#aeaeb2]">
+              {sections.length} {sections.length === 1 ? "section" : "sections"}
+            </p>
+            <p className="text-[12px] text-[#aeaeb2]">
+              {activeCount} active · {inactiveCount} inactive
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };

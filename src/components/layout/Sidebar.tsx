@@ -124,7 +124,7 @@ const Sidebar = ({
                 >
                   {/* Active Indicator */}
                   <span
-                    className={`absolute left-0 w-1 h-5 bg-[#FA2E6E] rounded-full transition-all duration-300 ease-out ${
+                    className={`absolute left-0 w-1 h-5 bg-[#fa243c] rounded-full transition-all duration-300 ease-out ${
                       active ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
                     }`}
                     style={{ transformOrigin: 'left center' }}
@@ -151,7 +151,7 @@ const Sidebar = ({
               <div className="flex items-center gap-3 flex-1">
                 {/* Active Indicator (when on playlist page) */}
                 <span
-                  className={`absolute left-0 w-1 h-5 bg-[#FA2E6E] rounded-full transition-all duration-300 ease-out ${
+                  className={`absolute left-0 w-1 h-5 bg-[#fa243c] rounded-full transition-all duration-300 ease-out ${
                     location.pathname.includes('/playlist') ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
                   }`}
                   style={{ transformOrigin: 'left center' }}
@@ -278,9 +278,9 @@ const Sidebar = ({
                 {/* Sign Out Option */}
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-neutral-50 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#fa243c] hover:bg-neutral-50 transition-colors"
                 >
-                  <LogoutIcon fontSize="small" className="text-red-500" />
+                  <LogoutIcon fontSize="small" className="text-[#fa243c]" />
                   <span>Sign Out</span>
                 </button>
               </div>

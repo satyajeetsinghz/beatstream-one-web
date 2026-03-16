@@ -121,7 +121,7 @@ const PlayerBar = () => {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={playPrevious}
-                            className="text-gray-600 hover:text-[#FA2E6E] transition-colors"
+                            className="text-gray-600 hover:text-[#fa243c] transition-colors"
                             aria-label="Previous track"
                         >
                             <FastRewindRoundedIcon sx={{ fontSize: '1.3rem' }} />
@@ -134,12 +134,12 @@ const PlayerBar = () => {
                         >
                             {isPlaying ? (
                                 <PauseCircleRoundedIcon
-                                    className="text-[#FA2E6E]"
+                                    className="text-[#fa243c]"
                                     sx={{ fontSize: '2.2rem' }}
                                 />
                             ) : (
                                 <PlayCircleRoundedIcon
-                                    className="text-[#FA2E6E]"
+                                    className="text-[#fa243c]"
                                     sx={{ fontSize: '2.2rem' }}
                                 />
                             )}
@@ -147,7 +147,7 @@ const PlayerBar = () => {
 
                         <button
                             onClick={playNext}
-                            className="text-gray-600 hover:text-[#FA2E6E] transition-colors"
+                            className="text-gray-600 hover:text-[#fa243c] transition-colors"
                             aria-label="Next track"
                         >
                             <FastForwardRoundedIcon sx={{ fontSize: '1.3rem' }} />
@@ -185,7 +185,7 @@ const PlayerBar = () => {
 
                                         {/* Volume fill */}
                                         <div
-                                            className="absolute h-1 bg-[#FA2E6E] rounded-full"
+                                            className="absolute h-1 bg-[#fa243c] rounded-full"
                                             style={{ width: `${localVolume * 100}%` }}
                                         ></div>
 
@@ -203,7 +203,7 @@ const PlayerBar = () => {
 
                                         {/* Thumb */}
                                         <div
-                                            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[#FA2E6E] rounded-full border-2 border-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[#fa243c] rounded-full border-2 border-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                             style={{ left: `${localVolume * 100}%`, transform: 'translate(-50%, -50%)' }}
                                         ></div>
                                     </div>
@@ -233,7 +233,7 @@ const PlayerBar = () => {
 
                             {/* Progress fill */}
                             <div
-                                className="absolute h-1 bg-[#FA2E6E] rounded-full"
+                                className="absolute h-1 bg-[#fa243c] rounded-full"
                                 style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
                             ></div>
 
@@ -275,7 +275,7 @@ const PlayerBar = () => {
                     </div>
 
                     {/* Like button - Apple Music style */}
-                    {/* <button className="hidden md:flex text-gray-400 hover:text-[#FA2E6E] transition-colors">
+                    {/* <button className="hidden md:flex text-gray-400 hover:text-[#fa243c] transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
@@ -288,7 +288,7 @@ const PlayerBar = () => {
                     <div className="flex items-center gap-3 md:gap-4">
                         <button
                             onClick={playPrevious}
-                            className="text-gray-600 hover:text-[#FA2E6E] transition-colors"
+                            className="text-gray-600 hover:text-[#fa243c] transition-colors"
                             aria-label="Previous track"
                         >
                             <FastRewindRoundedIcon sx={{ fontSize: { xs: '1.5rem', sm: '1.8rem', md: '2.2rem' } }} />
@@ -301,12 +301,12 @@ const PlayerBar = () => {
                         >
                             {isPlaying ? (
                                 <PauseCircleRoundedIcon
-                                    className="text-[#FA2E6E]"
+                                    className="text-[#fa243c]"
                                     sx={{ fontSize: { xs: '2.2rem', sm: '2.5rem', md: '2.8rem' } }}
                                 />
                             ) : (
                                 <PlayCircleRoundedIcon
-                                    className="text-[#FA2E6E]"
+                                    className="text-[#fa243c]"
                                     sx={{ fontSize: { xs: '2.2rem', sm: '2.5rem', md: '2.8rem' } }}
                                 />
                             )}
@@ -314,7 +314,7 @@ const PlayerBar = () => {
 
                         <button
                             onClick={playNext}
-                            className="text-gray-600 hover:text-[#FA2E6E] transition-colors"
+                            className="text-gray-600 hover:text-[#fa243c] transition-colors"
                             aria-label="Next track"
                         >
                             <FastForwardRoundedIcon sx={{ fontSize: { xs: '1.5rem', sm: '1.8rem', md: '2.2rem' } }} />
@@ -330,7 +330,7 @@ const PlayerBar = () => {
                         <div className="flex-1 relative group h-1">
                             <div className="absolute w-full h-1 bg-gray-200 rounded-full"></div>
                             <div
-                                className="absolute h-1 bg-[#FA2E6E] rounded-full transition-all duration-100"
+                                className="absolute h-1 bg-[#fa243c] rounded-full transition-all duration-100"
                                 style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
                             ></div>
                             <input
@@ -343,7 +343,7 @@ const PlayerBar = () => {
                                 aria-label="Seek progress"
                             />
                             <div
-                                className="absolute top-1/2 -translate-y-1/2 w-2 h-2 md:w-3 md:h-3 bg-[#FA2E6E] rounded-full border-2 border-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                                className="absolute top-1/2 -translate-y-1/2 w-2 h-2 md:w-3 md:h-3 bg-[#fa243c] rounded-full border-2 border-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
                                 style={{ left: `${(currentTime / (duration || 1)) * 100}%`, transform: 'translate(-50%, -50%)' }}
                             ></div>
                         </div>
@@ -374,7 +374,7 @@ const PlayerBar = () => {
                             <div className="relative w-12 md:w-16 h-1">
                                 <div className="absolute w-full h-1 bg-gray-200 rounded-full"></div>
                                 <div
-                                    className="absolute h-1 bg-[#FA2E6E] rounded-full transition-all duration-100"
+                                    className="absolute h-1 bg-[#fa243c] rounded-full transition-all duration-100"
                                     style={{ width: `${localVolume * 100}%` }}
                                 ></div>
                                 <input
@@ -388,7 +388,7 @@ const PlayerBar = () => {
                                     aria-label="Volume control"
                                 />
                                 <div
-                                    className={`absolute top-1/2 -translate-y-1/2 w-2 h-2 md:w-3 md:h-3 bg-[#FA2E6E] rounded-full border-2 border-white shadow-lg transition-all duration-200 ${isVolumeHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+                                    className={`absolute top-1/2 -translate-y-1/2 w-2 h-2 md:w-3 md:h-3 bg-[#fa243c] rounded-full border-2 border-white shadow-lg transition-all duration-200 ${isVolumeHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
                                         }`}
                                     style={{ left: `${localVolume * 100}%`, transform: 'translate(-50%, -50%)' }}
                                 ></div>

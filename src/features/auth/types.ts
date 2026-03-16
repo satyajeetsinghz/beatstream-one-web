@@ -1,12 +1,16 @@
 // import { User } from "firebase/auth";
 
+import { FieldValue } from "firebase/firestore";
+
 export interface IUser {
   uid: string;
   name: string;
   email: string;
   photoURL: string;
   role?: "admin" | "user";
-  createdAt: Date;
+  status: any;
+  createdAt: FieldValue;
+  lastLoginAt: FieldValue
 }
 
 export interface IAuthContext {

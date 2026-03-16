@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "@/services/firebase/config";
 import { IUser } from "../types";
 
@@ -21,7 +21,9 @@ export const createUserIfNotExists = async (
       email: firebaseUser.email ?? "",
       photoURL: firebaseUser.photoURL ?? "",
       role: role,
-      createdAt: new Date(),
+      status: "active",
+      createdAt: serverTimestamp(),
+      lastLoginAt: serverTimestamp()
     };
 
     await setDoc(userRef, newUser);

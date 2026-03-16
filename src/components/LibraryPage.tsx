@@ -36,7 +36,7 @@ const PlaylistCover = ({
     ) : (
       <div
         className="w-full h-full flex items-center justify-center"
-        style={{ background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)" }}
+        style={{ background: "linear-gradient(135deg, ##fa243c 0%, #bf5af2 100%)" }}
       >
         <LibraryMusicIcon
           className="text-white/80"
@@ -128,7 +128,7 @@ const LibraryPage = () => {
       <div className="flex items-center justify-between px-4 sm:px-6 md:px-8 py-6 sm:py-10 bg-white/80 backdrop-blur">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-[#ff375f] hover:text-[#e01e5a] transition-colors"
+          className="flex items-center gap-1 text-[#fa243c] hover:text-[#fa243c] transition-colors"
         >
           <ChevronLeftRoundedIcon fontSize="large" />
 
@@ -137,7 +137,7 @@ const LibraryPage = () => {
 
         <button
           onClick={openModal}
-          className="flex items-center gap-0.5 text-[#ff375f] hover:text-[#e01e5a] transition-colors"
+          className="flex items-center gap-0.5 text-[#fa243c] hover:text-[#fa243c] transition-colors"
         >
           <AddRoundedIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
           <span className="text-sm font-semibold">Add Playlist</span>
@@ -155,7 +155,7 @@ const LibraryPage = () => {
               style={{
                 width: isMobile ? 140 : 180,
                 height: isMobile ? 140 : 180,
-                background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)",
+                background: "linear-gradient(135deg, #fa243c 0%, #bf5af2 100%)",
               }}
             >
               <div className="w-full h-full flex items-center justify-center">
@@ -178,7 +178,7 @@ const LibraryPage = () => {
                 </div>
 
                 {/* Subtitle */}
-                {/* <h2 className="block sm:hidden text-[#FA2E6E] text-xl sm:text-2xl font-medium text-center md:text-left leading-snug">
+                {/* <h2 className="block sm:hidden text-[#fa243c] text-xl sm:text-2xl font-medium text-center md:text-left leading-snug">
                   {playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}
                 </h2> */}
 
@@ -203,7 +203,7 @@ const LibraryPage = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={openModal}
-                    className="bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-4 py-2 rounded-md font-medium flex items-center gap-1 text-sm shadow-sm"
+                    className="bg-[#fa243c] hover:bg-[#fa243c] text-white transition px-4 py-2 rounded-md font-medium flex items-center gap-1 text-sm shadow-sm"
                   >
                     <AddRoundedIcon fontSize="small" />
                     <span>New Playlist</span>
@@ -224,7 +224,7 @@ const LibraryPage = () => {
             <div
               className="w-14 h-14 rounded-md shrink-0 flex items-center justify-center shadow-sm"
               style={{
-                background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)",
+                background: "linear-gradient(135deg, #fa243c 0%, #bf5af2 100%)",
               }}
             >
               <FavoriteRoundedIcon className="text-white" sx={{ fontSize: 24 }} />
@@ -237,7 +237,7 @@ const LibraryPage = () => {
               <p className="text-xs text-gray-500 mt-0.5">
                 {likedLoading ? (
                   <div className="w-16">
-                    <AnimatedSpinner size={16} color="#ff375f" />
+                    <AnimatedSpinner size={16} color="#fa243c" />
                   </div>
                 ) : (
                   `${likedCount} ${likedCount === 1 ? "song" : "songs"}`
@@ -321,7 +321,7 @@ const LibraryPage = () => {
               </p>
               <button
                 onClick={openModal}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-[#ff375f] hover:bg-[#e01e5a] transition-colors shadow-sm"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-[#fa243c] hover:bg-[#fa243c] transition-colors shadow-sm"
               >
                 <AddRoundedIcon sx={{ fontSize: 18 }} />
                 New Playlist
@@ -409,7 +409,7 @@ const LibraryPage = () => {
                     <div className="fixed bottom-20 left-0 right-0 z-40 p-4 bg-gradient-to-t from-white via-white to-transparent">
                         <button
                             onClick={openModal}
-                            className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-sm font-semibold text-white bg-[#ff375f] hover:bg-[#e01e5a] transition-colors shadow-md"
+                            className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-sm font-semibold text-white bg-[#fa243c] hover:bg-[#fa243c] transition-colors shadow-md"
                         >
                             <AddRoundedIcon sx={{ fontSize: 20 }} />
                             New Playlist

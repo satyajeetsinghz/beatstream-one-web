@@ -142,8 +142,8 @@ const PlaylistPage = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
-          {/* <div className="w-8 h-8 border-2 border-gray-200 border-t-[#FA2E6E] rounded-full animate-spin"></div> */}
-          <AnimatedSpinner size={28} color="#ff375f" />
+          {/* <div className="w-8 h-8 border-2 border-gray-200 border-t-[#fa243c] rounded-full animate-spin"></div> */}
+          <AnimatedSpinner size={28} color="#fa243c" />
           <p className="text-sm text-gray-400">Loading playlist...</p>
         </div>
       </div>
@@ -164,12 +164,12 @@ const PlaylistPage = () => {
         {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-0 text-xs sm:text-sm text-gray-500 hover:text-[#FA2E6E] transition-colors group"
+          className="flex items-center gap-0 text-xs sm:text-sm text-gray-500 hover:text-[#fa243c] transition-colors group"
         >
           <div className="">
-            <ChevronLeftRounded fontSize="large" className="text-[#FA2E6E] group-hover:text-[#FA2E6E]" />
+            <ChevronLeftRounded fontSize="large" className="text-[#fa243c] group-hover:text-[#fa243c]" />
           </div>
-          <h1 className="text-lg font-semibold text-[#FA2E6E]">Playlist</h1>
+          <h1 className="text-lg font-semibold text-[#fa243c]">Playlist</h1>
         </button>
 
         {/* Three-dot menu for mobile - only visible on mobile */}
@@ -177,7 +177,7 @@ const PlaylistPage = () => {
           <div className="relative md:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-[#FA2E6E] hover:text-[#E01E5A] p-2"
+              className="text-[#fa243c] hover:text-[#fa243c] p-2"
               aria-label="Playlist options"
             >
               <MoreHorizIcon fontSize="medium" />
@@ -200,7 +200,7 @@ const PlaylistPage = () => {
 
                 <button
                   onClick={handleDelete}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 text-sm text-[#fa243c] hover:bg-red-50 transition-colors flex items-center gap-2"
                 >
                   <span>Delete</span>
                 </button>
@@ -214,7 +214,7 @@ const PlaylistPage = () => {
       {/* Top Section - Playlist Info */}
       <div className="flex flex-col md:flex-row gap-6 md:gap-10 relative">
         {/* Playlist Cover */}
-        <div className="relative w-40 h-40 sm:w-56 sm:h-56 mx-auto md:mx-0 bg-gradient-to-br from-[#FA2E6E] to-purple-400 rounded-md shadow-xl overflow-hidden flex-shrink-0">
+        <div className="relative w-40 h-40 sm:w-56 sm:h-56 mx-auto md:mx-0 bg-gradient-to-br from-[#fa243c] to-purple-400 rounded-md shadow-xl overflow-hidden flex-shrink-0">
           {playlist.coverURL ? (
             <img
               src={playlist.coverURL}
@@ -237,7 +237,7 @@ const PlaylistPage = () => {
               <ExplicitIcon className="text-gray-400" fontSize="small" />
             </div>
 
-            <h2 className="text-[#FA2E6E] text-xl sm:text-2xl mt-0.5 font-medium text-center md:text-left">
+            <h2 className="text-[#fa243c] text-xl sm:text-2xl mt-0.5 font-medium text-center md:text-left">
               {isOwner ? 'Your Playlist' : 'Playlist'}
             </h2>
 
@@ -275,14 +275,14 @@ const PlaylistPage = () => {
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
             <button
               onClick={handlePlayAll}
-              className="w-[35%] md:w-auto bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
+              className="w-[35%] md:w-auto bg-[#fa243c] hover:bg-[#fa243c] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
             >
               <PlayArrowIcon fontSize="small" /> <span className="text-sm">Play</span>
             </button>
 
             <button
               onClick={handleShufflePlay}
-              className="w-[35%] md:w-auto bg-[#FA2E6E] hover:bg-[#E01E5A] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
+              className="w-[35%] md:w-auto bg-[#fa243c] hover:bg-[#fa243c] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
             >
               <ShuffleIcon fontSize="small" /> <span className="text-sm">Shuffle</span>
             </button>
@@ -292,7 +292,7 @@ const PlaylistPage = () => {
               <div className="hidden md:block relative ml-auto">
                 <button
                   onClick={() => setDesktopMenuOpen(!desktopMenuOpen)}
-                  className="text-[#FA2E6E] hover:text-[#E01E5A] p-2"
+                  className="text-[#fa243c] hover:text-[#fa243c] p-2"
                   aria-label="Playlist options"
                 >
                   <MoreHorizIcon fontSize="medium" />
@@ -315,7 +315,7 @@ const PlaylistPage = () => {
 
                     <button
                       onClick={handleDelete}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm text-[#fa243c] hover:bg-red-50 transition-colors flex items-center gap-2"
                     >
                       <span>Delete</span>
                     </button>
@@ -365,7 +365,7 @@ const PlaylistPage = () => {
                       {formatDuration(song.duration)}
                     </span>
                     <button
-                      className="opacity-0 group-hover:opacity-100 text-[#FA2E6E] hover:text-[#E01E5A] transition"
+                      className="opacity-0 group-hover:opacity-100 text-[#fa243c] hover:text-[#fa243c] transition"
                       onClick={(e) => {
                         e.stopPropagation();
                         // Handle individual song menu if needed
@@ -386,7 +386,7 @@ const PlaylistPage = () => {
             </div>
             <h3 className="text-sm font-medium text-neutral-700 mb-1">No songs yet</h3>
             <p className="text-xs text-gray-500 mb-4">Add songs to this playlist</p>
-            <button className="px-4 py-2 bg-[#FA2E6E] text-white text-xs font-medium rounded-md hover:bg-[#E01E5A] transition-colors inline-flex items-center gap-1">
+            <button className="px-4 py-2 bg-[#fa243c] text-white text-xs font-medium rounded-md hover:bg-[#fa243c] transition-colors inline-flex items-center gap-1">
               <AddIcon fontSize="small" />
               <span>Browse Music</span>
             </button>

@@ -43,7 +43,7 @@ const ProgressDot = ({
             <motion.div
                 className="rounded-full overflow-hidden"
                 animate={{
-                    backgroundColor: isActive ? "#ff375f" : "rgba(255,255,255,0.35)",
+                    backgroundColor: isActive ? "#fa243c" : "rgba(255,255,255,0.35)",
                     width: isActive ? activeWidth : inactiveWidth,
                     height: 4,
                 }}
@@ -108,6 +108,16 @@ const FeaturedBanner = () => {
     const [isPaused, setIsPaused] = useState(false);
 
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const mountedRef = useRef(true);
+
+
+    // ── Cleanup on unmount ───────────────────────────────────────────────────
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    }, []);
 
     // ── Interval management ───────────────────────────────────────────────────
     const clearSlideInterval = useCallback(() => {
@@ -119,9 +129,12 @@ const FeaturedBanner = () => {
 
     const startSlideInterval = useCallback(() => {
         clearSlideInterval();
-        if (!banners.length) return;
+        if (!banners.length || !mountedRef.current) return;
+
         intervalRef.current = setInterval(() => {
-            setCurrent((prev) => (prev + 1) % banners.length);
+            if (mountedRef.current) {
+                setCurrent((prev) => (prev + 1) % banners.length);
+            }
         }, SLIDE_INTERVAL_MS);
     }, [banners.length, clearSlideInterval]);
 
@@ -131,25 +144,40 @@ const FeaturedBanner = () => {
         } else {
             startSlideInterval();
         }
-        return clearSlideInterval;
+
+        return () => {
+            clearSlideInterval();
+        };
     }, [isPaused, startSlideInterval, clearSlideInterval]);
 
     // ── Clamp current index if banners shrink ─────────────────────────────────
     useEffect(() => {
-        if (banners.length && current >= banners.length) {
+        if (banners.length && current >= banners.length && mountedRef.current) {
             setCurrent(banners.length - 1);
         }
     }, [banners.length, current]);
 
+    // ── Reset current when banners change ─────────────────────────────────────
+    useEffect(() => {
+        if (banners.length > 0 && mountedRef.current) {
+            setCurrent(0);
+        }
+    }, [banners.length]);
+
     // ── Keyboard navigation ───────────────────────────────────────────────────
     useEffect(() => {
         if (!banners.length) return;
+
         const handler = (e: KeyboardEvent) => {
-            if (e.key === "ArrowLeft")
+            if (!mountedRef.current) return;
+
+            if (e.key === "ArrowLeft") {
                 setCurrent((p) => (p - 1 + banners.length) % banners.length);
-            else if (e.key === "ArrowRight")
+            } else if (e.key === "ArrowRight") {
                 setCurrent((p) => (p + 1) % banners.length);
+            }
         };
+
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
     }, [banners.length]);
@@ -172,6 +200,7 @@ const FeaturedBanner = () => {
         (e: React.MouseEvent) => {
             e.stopPropagation();
             e.preventDefault();
+
             const banner = banners[current];
             if (!banner?.redirectType) return;
 
@@ -191,6 +220,8 @@ const FeaturedBanner = () => {
                 case "section":
                     navigate(`/section/${banner.redirectId}`);
                     break;
+                default:
+                    console.warn(`[FeaturedBanner] Unknown redirect type: ${banner.redirectType}`);
             }
         },
         [banners, current, mappedSongs, navigate, playTrack]
@@ -208,6 +239,7 @@ const FeaturedBanner = () => {
 
     const goTo = useCallback(
         (index: number) => {
+            if (!mountedRef.current) return;
             setCurrent(index);
             startSlideInterval(); // reset timer from the new slide
         },
@@ -217,6 +249,7 @@ const FeaturedBanner = () => {
     const goPrev = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation();
+            if (!banners.length || !mountedRef.current) return;
             goTo((current - 1 + banners.length) % banners.length);
         },
         [current, banners.length, goTo]
@@ -225,15 +258,35 @@ const FeaturedBanner = () => {
     const goNext = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation();
+            if (!banners.length || !mountedRef.current) return;
             goTo((current + 1) % banners.length);
         },
         [current, banners.length, goTo]
     );
 
     // ── Early return ──────────────────────────────────────────────────────────
-    if (loading || !banners.length) return null;
+    if (loading) {
+        return (
+            <div className="relative w-full h-[180px] sm:h-[260px] bg-gray-200 rounded-2xl mb-8 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="w-8 h-8 border-2 border-gray-300 border-t-[#fa243c] rounded-full animate-spin" />
+                    <p className="text-gray-500 text-sm">Loading promotions...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!banners.length) {
+        return (
+            <div className="relative w-full h-[180px] sm:h-[260px] bg-gray-200 rounded-2xl mb-8 flex items-center justify-center">
+                <p className="text-gray-500 font-semibold text-sm">No active promotions</p>
+            </div>
+        );
+    }
 
     const banner = banners[current];
+    if (!banner) return null;
+
     const bannerHeight = isMobile ? 200 : isTablet ? 250 : 300;
     const showControls = banners.length > 1;
 
@@ -254,20 +307,27 @@ const FeaturedBanner = () => {
                     className="absolute inset-0"
                 >
                     {/* ── Media ── */}
+                    {/* ── Media ── */}
                     <motion.div
                         className="absolute inset-0"
                         initial={{ scale: 1.06 }}
                         animate={{ scale: 1 }}
                         transition={{ duration: 5, ease: "easeOut" }}
                     >
-                        {banner.mediaType === "video" ? (
+                        {banner.mediaType === "video" && banner.mediaUrl ? (
                             <video
+                                key={banner.id}
                                 src={banner.mediaUrl}
                                 autoPlay
                                 muted
                                 loop
                                 playsInline
                                 className="w-full h-full object-cover pointer-events-none"
+                                onError={(e) => {
+                                    console.error("Video failed to load:", e);
+                                    // Fallback to image
+                                    e.currentTarget.style.display = 'none';
+                                }}
                             />
                         ) : (
                             <img
@@ -315,7 +375,7 @@ const FeaturedBanner = () => {
                                     whileHover={{ scale: 1.04 }}
                                     whileTap={{ scale: 0.96 }}
                                     onClick={handlePlayClick}
-                                    className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 bg-white text-gray-900 font-semibold rounded-full hover:bg-[#ff375f] hover:text-white transition-colors duration-200 shadow-lg text-xs sm:text-sm cursor-pointer select-none"
+                                    className="flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-1.5 sm:py-2 bg-white text-gray-900 font-semibold rounded-full hover:bg-[#fa243c] hover:text-white transition-colors duration-200 shadow-lg text-xs sm:text-sm cursor-pointer select-none"
                                 >
                                     <PlayCircleIcon sx={{ fontSize: isMobile ? 16 : 18 }} />
                                     <span>{banner.buttonText || (isMobile ? "Play" : "Play Now")}</span>

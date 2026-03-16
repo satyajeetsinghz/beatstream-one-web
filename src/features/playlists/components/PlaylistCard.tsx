@@ -18,7 +18,7 @@ const PlaylistCard = ({ playlist, variant = 'default' }: Props) => {
   // Generate a gradient based on playlist name for consistent coloring
   const getGradient = (name: string) => {
     const gradients = [
-      'from-[#FA2E6E] to-purple-500',
+      'from-[#fa243c] to-purple-500',
       'from-blue-400 to-cyan-400',
       'from-green-400 to-emerald-500',
       'from-orange-400 to-pink-500',
@@ -119,7 +119,7 @@ const PlaylistCard = ({ playlist, variant = 'default' }: Props) => {
             className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 flex items-center justify-center transition-all duration-200"
           >
             <PlayCircleIcon 
-              className="text-white group-hover:text-[#FA2E6E] transition-colors duration-200" 
+              className="text-white group-hover:text-[#fa243c] transition-colors duration-200" 
               sx={{ fontSize: { xs: '2rem', sm: '2.2rem', md: '2.5rem' } }}
             />
           </button> */}
@@ -143,7 +143,7 @@ const PlaylistCard = ({ playlist, variant = 'default' }: Props) => {
 
       {/* Playlist Info */}
       <div className="p-2 sm:p-3">
-        <h3 className="font-medium text-gray-900 text-xs sm:text-sm truncate group-hover:text-[#FA2E6E] transition-colors">
+        <h3 className="font-medium text-gray-900 text-xs sm:text-sm truncate group-hover:text-[#fa243c] transition-colors">
           {playlist.name}
         </h3>
         

@@ -79,38 +79,41 @@ export const playlistSongToITrack = (song: PlaylistSong): ITrack => ({
 /**
  * Convert array of PlaylistSong to array of ISong
  */
-export const playlistSongsToISongs = (songs: PlaylistSong[]): ISong[] => 
+export const playlistSongsToISongs = (songs: PlaylistSong[]): ISong[] =>
   songs.map(playlistSongToISong);
 
 /**
  * Convert array of PlaylistSong to array of ITrack
  */
-export const playlistSongsToITracks = (songs: PlaylistSong[]): ITrack[] => 
+export const playlistSongsToITracks = (songs: PlaylistSong[]): ITrack[] =>
   songs.map(playlistSongToITrack);
 
 /**
  * Convert ISong to PlaylistSong for adding to playlist
+ * FIX: Strip undefined fields — Firestore rejects undefined values entirely.
+ * duration and album are optional on ISong so we only include them if present.
  */
 export const iSongToPlaylistSong = (song: ISong): PlaylistSong => ({
   id: song.id,
   title: song.title,
   artist: song.artist,
-  coverUrl: song.coverUrl,
-  audioUrl: song.audioUrl,
-  duration: song.duration,
-  album: song.album,
+  coverUrl: song.coverUrl ?? '',
+  ...(song.audioUrl != null && { audioUrl: song.audioUrl }),
+  ...(song.duration != null && { duration: song.duration }),
+  ...(song.album != null && { album: song.album }),
 });
 
 /**
  * Convert ITrack to PlaylistSong for adding to playlist
+ * FIX: Same undefined guard — ITrack.duration and audioUrl can be undefined.
  */
 export const iTrackToPlaylistSong = (track: ITrack): PlaylistSong => ({
   id: track.id,
   title: track.title,
   artist: track.artist,
-  coverUrl: track.coverUrl,
-  audioUrl: track.audioUrl,
-  duration: track.duration,
+  coverUrl: track.coverUrl ?? '',
+  ...(track.audioUrl != null && { audioUrl: track.audioUrl }),
+  ...(track.duration != null && { duration: track.duration }),
 });
 
 /* -----------------------------

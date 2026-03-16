@@ -129,8 +129,8 @@ const HomePage = () => {
     return (
       <div className="h-[calc(100vh-6rem)] bg-white flex items-center justify-center px-4">
         <div className="flex flex-col items-center gap-4 text-center">
-          {/* <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-[#fea1be] border-t-[#FA2E6E] rounded-full animate-spin"></div> */}
-          <AnimatedSpinner size={28} color="#ff375f" />
+          {/* <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-[#fea1be] border-t-[#fa243c] rounded-full animate-spin"></div> */}
+          <AnimatedSpinner size={28} color="#fa243c" />
           <p className="text-xs sm:text-sm text-gray-400 font-medium">Loading your music...</p>
         </div>
       </div>
@@ -157,7 +157,7 @@ const HomePage = () => {
               <button
                 ref={profileButtonRef}
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="w-10 h-10 rounded-full bg-[#FA2E6E] flex items-center justify-center text-white font-medium hover:opacity-90 transition-opacity shadow-md"
+                className="w-10 h-10 rounded-full bg-[#fa243c] flex items-center justify-center text-white font-medium hover:opacity-90 transition-opacity shadow-md"
                 aria-label="Profile menu"
               >
                 {profile?.photoURL ? (
@@ -211,9 +211,9 @@ const HomePage = () => {
                   {/* Sign Out Option */}
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-neutral-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#fa243c] hover:bg-neutral-50 transition-colors"
                   >
-                    <LogoutIcon fontSize="small" className="text-red-500" />
+                    <LogoutIcon fontSize="small" className="text-[#fa243c]" />
                     <span>Sign Out</span>
                   </button>
                 </div>
@@ -259,7 +259,7 @@ const HomePage = () => {
 
               {/* Quick action buttons for empty state */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6 sm:mt-8">
-                <button className="w-full sm:w-auto px-6 py-2.5 bg-[#FA2E6E] text-white text-sm font-medium rounded-full hover:bg-[#E01E5A] transition-colors shadow-sm">
+                <button className="w-full sm:w-auto px-6 py-2.5 bg-[#fa243c] text-white text-sm font-medium rounded-full hover:bg-[#fa243c] transition-colors shadow-sm">
                   Browse Music
                 </button>
                 <button className="w-full sm:w-auto px-6 py-2.5 bg-white text-gray-700 text-sm font-medium rounded-full border border-gray-200 hover:bg-gray-50 transition-colors">

@@ -158,7 +158,7 @@ const CreatePlaylistModal = ({ open, onClose }: Props) => {
                         {/* Icon */}
                         {/* <div className="mx-auto mb-3.5 w-14 h-14 rounded-2xl flex items-center justify-center"
                             style={{
-                                background: "linear-gradient(135deg, #ff375f 0%, #bf5af2 100%)",
+                                background: "linear-gradient(135deg, #fa243c 0%, #bf5af2 100%)",
                                 boxShadow: "0 8px 24px rgba(255,55,95,0.25)",
                             }}
                         >
@@ -191,14 +191,13 @@ const CreatePlaylistModal = ({ open, onClose }: Props) => {
                             disabled={loading}
                             className="w-full bg-neutral-50 rounded-md px-4 py-2 text-sm tracking-wide font-medium text-neutral-800/70 placeholder-neutral-800/70 outline-none transition-all duration-200 disabled:opacity-50"
                             style={{
-                                fontFamily: "-apple-system, 'SF Pro Text', sans-serif",
                                 letterSpacing: "-0.1px",
                                 border: error
                                     ? "1.5px solid rgba(255,59,48,0.5)"
                                     : isValid
                                         ? "1.5px solid rgba(255,55,95,0.4)"
                                         : "1.5px solid rgba(0,0,0,0.06)",
-                                caretColor: "#ff375f",
+                                caretColor: "#fa243c",
                             }}
                             aria-label="Playlist Title"
                         />
@@ -206,7 +205,7 @@ const CreatePlaylistModal = ({ open, onClose }: Props) => {
                         {/* Error or char count */}
                         <div className="flex justify-between mt-2 px-0.5 h-4">
                             {error ? (
-                                <p className="text-[11px] text-[#ff3b30]">{error}</p>
+                                <p className="text-[11px] text-[#fa243c]">{error}</p>
                             ) : (
                                 <span />
                             )}
@@ -239,7 +238,7 @@ const CreatePlaylistModal = ({ open, onClose }: Props) => {
                         <button
                             onClick={handleCreate}
                             disabled={!isValid || loading}
-                            className="w-full text-sm py-1 rounded-md text-neutral-50 hover:text-neutral-50 bg-[#ff375f] hover:bg-[#c50027] font-medium transition-colors duration-100 disabled:opacity-40"
+                            className="w-full text-sm py-1 rounded-md text-neutral-50 hover:text-neutral-50 bg-[#fa243c] hover:bg-[#fa243c] font-medium transition-colors duration-100 disabled:opacity-40"
                             style={{
                                 color: isValid && !loading ? "#fff" : "fff",
                             }}
@@ -247,7 +246,7 @@ const CreatePlaylistModal = ({ open, onClose }: Props) => {
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
                                     <span
-                                        className="w-4 h-4 rounded-full border-2 border-[#ff375f]/20 border-t-[#ff375f] animate-spin inline-block"
+                                        className="w-4 h-4 rounded-full border-2 border-[#fa243c]/20 border-t-[#fa243c] animate-spin inline-block"
                                     />
                                     Creating
                                 </span>

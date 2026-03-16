@@ -135,7 +135,7 @@ const PlaylistList = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#FA2E6E] to-purple-500 flex items-center justify-center">
+                  <div className="w-full h-full bg-gradient-to-br from-[#fa243c] to-purple-500 flex items-center justify-center">
                     <LibraryMusicIcon className="text-white opacity-70" fontSize="small" />
                   </div>
                 )}
@@ -153,7 +153,7 @@ const PlaylistList = () => {
                       setEditName("");
                     }
                   }}
-                  className="w-full px-2 py-1 text-sm border border-[#FA2E6E] rounded-md focus:outline-none"
+                  className="w-full px-2 py-1 text-sm border border-[#fa243c] rounded-md focus:outline-none"
                   placeholder="Playlist name"
                   autoFocus
                 />
@@ -175,7 +175,7 @@ const PlaylistList = () => {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#FA2E6E] to-purple-500 flex items-center justify-center">
+                    <div className="w-full h-full bg-gradient-to-br from-[#fa243c] to-purple-500 flex items-center justify-center">
                       <LibraryMusicIcon
                         className="text-white opacity-70"
                         fontSize="small"
@@ -255,13 +255,13 @@ const PlaylistList = () => {
                   <button
                     onClick={() => handleDelete(playlist.id)}
                     disabled={deletingId === playlist.id}
-                    className={`w-full text-left px-3 py-2 text-xs sm:text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 ${
+                    className={`w-full text-left px-3 py-2 text-xs sm:text-sm text-[#fa243c] hover:bg-red-50 transition-colors flex items-center gap-2 ${
                       deletingId === playlist.id ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
                     {deletingId === playlist.id ? (
                       <>
-                        <div className="w-3 h-3 border-2 border-red-200 border-t-red-500 rounded-full animate-spin"></div>
+                        <div className="w-3 h-3 border-2 border-red-200 border-t-[#fa243c] rounded-full animate-spin"></div>
                         <span>Deleting...</span>
                       </>
                     ) : (

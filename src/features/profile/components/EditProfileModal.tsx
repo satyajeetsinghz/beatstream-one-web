@@ -144,7 +144,7 @@ const EditProfileModal = ({ profile, onClose, onSave }: Props) => {
                     outline: none;
                     transition: border-color 0.15s;
                 }
-                .ep-input:focus { border-color: #ff375f; }
+                .ep-input:focus { border-color: #fa243c; }
                 .ep-input::placeholder { color: #aeaeb2; }
             `}</style>
 
@@ -243,7 +243,7 @@ const EditProfileModal = ({ profile, onClose, onSave }: Props) => {
                                     <div className="h-[3px] rounded-full bg-black/10 overflow-hidden">
                                         <div
                                             className="h-full rounded-full transition-all duration-150"
-                                            style={{ width: `${uploadProgress}%`, background: "#ff375f" }}
+                                            style={{ width: `${uploadProgress}%`, background: "#fa243c" }}
                                         />
                                     </div>
                                 </div>
@@ -266,7 +266,7 @@ const EditProfileModal = ({ profile, onClose, onSave }: Props) => {
                                     maxLength={50}
                                     disabled={loading}
                                     className="ep-input disabled:opacity-50 text-sm"
-                                    style={{ caretColor: "#ff375f" }}
+                                    style={{ caretColor: "#fa243c" }}
                                 />
                             </div>
 
@@ -321,7 +321,7 @@ const EditProfileModal = ({ profile, onClose, onSave }: Props) => {
                                     Anyone can follow and see your music.
                                 </p>
                             </div>
-                            <button className="ep-toggle flex-shrink-0" style={{ background: "#ff375f" }} aria-label="Everyone toggle">
+                            <button className="ep-toggle flex-shrink-0" style={{ background: "#fa243c" }} aria-label="Everyone toggle">
                                 <div className="ep-toggle-thumb" style={{ transform: "translateX(20px)" }} />
                             </button>
                         </div>
@@ -354,7 +354,7 @@ const EditProfileModal = ({ profile, onClose, onSave }: Props) => {
                             disabled={!isValid || loading}
                             className="flex-1 py-2 sm:py-1.5 rounded-full sm:rounded-md text-sm font-semibold flex items-center justify-center gap-2 transition-opacity"
                             style={{
-                                background: "#ff375f",
+                                background: "#fa243c",
                                 color: "#fff",
                                 opacity: !isValid || loading ? 0.45 : 1,
                             }}

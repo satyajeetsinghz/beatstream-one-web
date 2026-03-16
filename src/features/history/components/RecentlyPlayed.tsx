@@ -65,7 +65,7 @@ const RecentlyPlayed = () => {
         {/* Header - Responsive */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-1 h-4 sm:h-5 bg-[#FA2E6E] rounded-full"></div>
+            <div className="w-1 h-4 sm:h-5 bg-[#fa243c] rounded-full"></div>
             <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recently Played</h2>
           </div>
           <div className="w-20 sm:w-16 h-6 sm:h-8 bg-gray-200 rounded-full ml-auto sm:ml-0"></div>
@@ -95,7 +95,7 @@ const RecentlyPlayed = () => {
       {/* Header with Apple Music styling - Responsive */}
       <div className="flex flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="w-1 h-4 sm:h-5 bg-[#FA2E6E] rounded-full"></div>
+          <div className="w-1 h-4 sm:h-5 bg-[#fa243c] rounded-full"></div>
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recently Played</h2>
           {/* <span className="text-xs text-gray-400">
             {historyTracks.length} {historyTracks.length === 1 ? 'song' : 'songs'}
@@ -108,7 +108,7 @@ const RecentlyPlayed = () => {
             <button
               onClick={handleClearHistory}
               disabled={clearing}
-              className={`ml-0 sm:ml-2 text-xs text-gray-500/80 hover:text-white transition-colors px-2 py-1 rounded-md bg-slate-100 hover:bg-[#FA2E6E] whitespace-nowrap ${clearing ? 'opacity-50 cursor-not-allowed' : ''
+              className={`ml-0 sm:ml-2 text-xs text-gray-500/80 hover:text-white transition-colors px-2 py-1 rounded-md bg-slate-100 hover:bg-[#fa243c] whitespace-nowrap ${clearing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
             >
               {clearing ? 'Removing...' : 'Remove History'}
@@ -177,7 +177,7 @@ const RecentlyPlayed = () => {
       {/* View all link for mobile (if more than 6 items) */}
       {/* {historyTracks.length > 6 && isMobile && (
         <div className="mt-4 text-center">
-          <button className="text-xs text-gray-400 hover:text-[#FA2E6E] transition-colors">
+          <button className="text-xs text-gray-400 hover:text-[#fa243c] transition-colors">
             View all {historyTracks.length} songs
           </button>
         </div>

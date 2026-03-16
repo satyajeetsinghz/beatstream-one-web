@@ -28,7 +28,7 @@ const LoginPage = () => {
           <div className="text-center mb-6 sm:mb-8">
             <div className="relative inline-block">
               {/* Pulse ring effect */}
-              <div className="absolute inset-0 rounded-2xl animate-ping bg-[#FA2E6E]/20 -z-10"></div>
+              <div className="absolute inset-0 rounded-2xl animate-ping bg-[#fa243c]/20 -z-10"></div>
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
               BeatStream
@@ -51,15 +51,15 @@ const LoginPage = () => {
           {/* Features Grid - Responsive */}
           <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
             <div className="text-center p-2 sm:p-3 bg-gray-50/80 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-gray-100">
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#FA2E6E] mb-1">∞</div>
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#fa243c] mb-1">∞</div>
               <p className="text-[10px] sm:text-xs text-gray-600">Unlimited</p>
             </div>
             <div className="text-center p-2 sm:p-3 bg-gray-50/80 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-gray-100">
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#FA2E6E] mb-1">HD</div>
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#fa243c] mb-1">HD</div>
               <p className="text-[10px] sm:text-xs text-gray-600">Quality</p>
             </div>
             <div className="text-center p-2 sm:p-3 bg-gray-50/80 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-gray-100">
-              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#FA2E6E] mb-1">24/7</div>
+              <div className="text-xl sm:text-2xl md:text-3xl font-bold text-[#fa243c] mb-1">24/7</div>
               <p className="text-[10px] sm:text-xs text-gray-600">Streaming</p>
             </div>
           </div>
@@ -68,7 +68,7 @@ const LoginPage = () => {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full bg-[#FA2E6E] hover:bg-[#E01E5A] text-white font-medium py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 group shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
+            className="w-full bg-[#fa243c] hover:bg-[#E01E5A] text-white font-medium py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 group shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
           >
             {loading ? (
               <>
@@ -101,7 +101,7 @@ const LoginPage = () => {
             className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl sm:rounded-2xl transition-all duration-200 border border-gray-200 flex items-center justify-center gap-2 group"
           >
             <span className="text-xs sm:text-sm">Create an account</span>
-            <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 group-hover:text-[#FA2E6E] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 group-hover:text-[#fa243c] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -109,11 +109,11 @@ const LoginPage = () => {
           {/* Terms and Privacy - Responsive */}
           <p className="text-[10px] sm:text-xs text-gray-400 text-center mt-6 sm:mt-8 leading-relaxed">
             By continuing, you agree to our{' '}
-            <a href="#" className="text-gray-600 hover:text-[#FA2E6E] underline underline-offset-2 transition-colors font-medium">
+            <a href="#" className="text-gray-600 hover:text-[#fa243c] underline underline-offset-2 transition-colors font-medium">
               Terms
             </a>{' '}
             and{' '}
-            <a href="#" className="text-gray-600 hover:text-[#FA2E6E] underline underline-offset-2 transition-colors font-medium">
+            <a href="#" className="text-gray-600 hover:text-[#fa243c] underline underline-offset-2 transition-colors font-medium">
               Privacy Policy
             </a>
           </p>

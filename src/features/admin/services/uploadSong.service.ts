@@ -7,7 +7,9 @@ export const uploadSong = async (
   artist: string,
   audioFile: File,
   coverFile: File,
-  sectionIds: string[]
+  sectionIds: string[],
+  duration: string = "",   // e.g. "3:45" — pass from UploadSongForm
+  album: string = "",      // e.g. "Album Name" — pass from UploadSongForm
 ) => {
   // Upload audio
   const audioUrl = await uploadToCloudinary(audioFile);
@@ -23,6 +25,8 @@ export const uploadSong = async (
     coverUrl,
     sectionIds,
     likeCount: 0,
+    duration,   // ✅ always written, never undefined
+    album,      // ✅ always written, never undefined
     createdAt: serverTimestamp(),
   });
 };
