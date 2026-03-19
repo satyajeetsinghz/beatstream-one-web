@@ -284,11 +284,11 @@ const LikedSongs = () => {
                 key={song.id}
                 onClick={() => playTrack(song, songs)}
                 className={`
-          group grid items-center px-5 py-2.5 cursor-pointer transition-colors rounded-md 
+          group grid items-center pr-1 sm:px-5 py-2.5 cursor-pointer transition-colors rounded-md 
           hover:bg-[#e8e8e8] 
           ${i % 2 === 0 ? "bg-[#f5f5f7]" : "bg-[#fafafa]"}
           ${i !== songs.length - 1 ? "border-b border-[#f5f5f7]" : ""}
-          grid-cols-[40px_1fr_32px] sm:grid-cols-[40px_1fr_1fr_1fr_56px_32px]
+          grid-cols-[25px_1fr_40px] sm:grid-cols-[40px_1fr_1fr_1fr_56px_32px]
         `}
               >
                 {/* Star icon - replaces the index number */}
@@ -320,7 +320,7 @@ const LikedSongs = () => {
 
                     {/* Tooltip - controlled by button hover */}
                     <span className="
-              absolute left-1/2 -translate-x-1/2 bottom-full mb-1 
+              absolute left-1/2 -translate-x-[15%] sm:-translate-x-1/2 bottom-full mb-1 
               px-2 py-1 text-[10px] font-medium text-neutral-800 bg-neutral-50 rounded
               opacity-0 group-hover/star-btn:opacity-100 transition-opacity
               pointer-events-none whitespace-nowrap z-10

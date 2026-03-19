@@ -92,7 +92,7 @@ const LibraryPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-aut px-6 sm:px-8 pb-16">
+      <div className="max-w-7xl mx-aut px-4 sm:px-8 pb-16">
 
         {/* ── Hero ── */}
         <div className="pt-10 pb-10">

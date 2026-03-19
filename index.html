@@ -2,9 +2,55 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- ── Viewport ─────────────────────────────────────────────────────────
+         viewport-fit=cover: content extends behind notch / Dynamic Island.
+         Required for env(safe-area-inset-*) to work in MobileNav + PlayerBar.
+    ──────────────────────────────────────────────────────────────────────── -->
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- ── App identity ─────────────────────────────────────────────────── -->
+    <title>BeatStream</title>
+    <meta name="description"
+      content="BeatStream — your personal music streaming app." />
+    <meta name="application-name" content="BeatStream" />
+
+    <!-- ── Favicon ──────────────────────────────────────────────────────── -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>beatstream-one-web</title>
+    <!-- Fallback PNG favicon for browsers that don't support SVG -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96x96.png" />
+
+    <!-- ── PWA Manifest ─────────────────────────────────────────────────── -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- ── Theme colour ─────────────────────────────────────────────────── -->
+    <!-- Colours the browser chrome bar on Android Chrome and the task switcher -->
+    <meta name="theme-color" content="#fa243c" />
+    <!-- Windows tile colour (Edge / IE legacy) -->
+    <meta name="msapplication-TileColor"  content="#fa243c" />
+    <meta name="msapplication-TileImage"  content="/icons/icon-144x144.png" />
+    <meta name="msapplication-navbutton-color" content="#fa243c" />
+
+    <!-- ── iOS Safari PWA ───────────────────────────────────────────────── -->
+    <!-- Enables full-screen standalone mode when added to home screen -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- Status bar appearance: default | black | black-translucent -->
+    <!-- "default" = white bar with dark text, matches our light UI -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- Name shown under the home screen icon -->
+    <meta name="apple-mobile-web-app-title" content="BeatStream" />
+
+    <!-- iOS touch icons — Safari uses these for the home screen icon -->
+    <!-- Provide the largest size; iOS scales down automatically -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+
+    <!-- ── Open Graph (sharing previews) ────────────────────────────────── -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:title"       content="BeatStream" />
+    <meta property="og:description" content="Your personal music streaming app." />
+    <meta property="og:image"       content="/icons/icon-512x512.png" />
   </head>
   <body>
     <div id="root"></div>

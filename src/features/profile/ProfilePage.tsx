@@ -86,7 +86,7 @@ const ScrollSection = ({
     scrollRef.current?.scrollBy({ left: dir === "l" ? -300 : 300, behavior: "smooth" });
 
   const arrowCls =
-    "absolute top-[42%] -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-md " +
+    "absolute top-[42%] -translate-y-1/2 z-10 w-6 h-6 bg-[#fa243c] rounded-full shadow-md " +
     "flex items-center justify-center hover:shadow-lg transition-all duration-200";
 
   return (
@@ -94,7 +94,7 @@ const ScrollSection = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-[3px] h-5 rounded-full" style={{ background: P }} />
+          <div className="w-[4px] h-5 rounded-full" style={{ background: P }} />
           <h2 className="text-[17px] font-bold text-[#1d1d1f] tracking-tight">{title}</h2>
         </div>
         {linkTo && (
@@ -114,11 +114,11 @@ const ScrollSection = ({
       <div className="relative">
         {showLeft && (
           <>
-            <div className="absolute left-0 top-0 bottom-2 w-12 bg-gradient-to-r from-[#f5f5f7] to-transparent pointer-events-none z-[5]" />
+            <div className="absolute left-0 top-0 bottom-2 w-4 bg-gradient-to-r from-[#f5f5f7] to-transparent pointer-events-none z-[5]" />
             <button onClick={() => scroll("l")} aria-label="Scroll left"
               className={`${arrowCls} left-0 -ml-3`}
               style={{ opacity: hovered ? 1 : 0, transition: "opacity 0.2s" }}>
-              <ChevronLeftIcon sx={{ fontSize: 18 }} className="text-[#3c3c43]" />
+              <ChevronLeftIcon sx={{ fontSize: 18 }} className="text-white" />
             </button>
           </>
         )}
@@ -133,11 +133,11 @@ const ScrollSection = ({
 
         {showRight && (
           <>
-            <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-[#f5f5f7] to-transparent pointer-events-none z-[5]" />
+            <div className="absolute right-0 top-0 bottom-2 w-4 bg-gradient-to-l from-[#f5f5f7] to-transparent pointer-events-none z-[5]" />
             <button onClick={() => scroll("r")} aria-label="Scroll right"
               className={`${arrowCls} right-0 -mr-3`}
               style={{ opacity: hovered ? 1 : 0, transition: "opacity 0.2s" }}>
-              <ChevronRightIcon sx={{ fontSize: 18 }} className="text-[#3c3c43]" />
+              <ChevronRightIcon sx={{ fontSize: 18 }} className="text-white" />
             </button>
           </>
         )}
@@ -291,7 +291,7 @@ const ProfilePage = () => {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               onClick={openModal}
-              className="px-5 py-[7px] rounded-md text-[13px] font-bold text-white tracking-wide transition-opacity hover:opacity-85 active:opacity-60"
+              className="px-5 py-[7px] rounded-full sm:rounded-md text-[13px] font-bold text-white tracking-wide transition-opacity hover:opacity-85 active:opacity-60"
               style={{ background: P }}
             >
               Edit
@@ -300,7 +300,7 @@ const ProfilePage = () => {
             <div className="relative">
               <button
                 onClick={() => setMoreOpen((v) => !v)}
-                className="w-9 h-9 rounded-md flex items-center justify-center text-white transition-opacity hover:opacity-85 active:opacity-60"
+                className="w-9 h-9 rounded-full sm:rounded-md flex items-center justify-center text-white transition-opacity hover:opacity-85 active:opacity-60"
                 style={{ background: P }}
                 aria-label="More options"
               >
@@ -346,7 +346,7 @@ const ProfilePage = () => {
           {pL ? (
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-[3px] h-5 rounded-full bg-[#e5e5ea] animate-pulse" />
+                <div className="w-[4px] h-5 rounded-full bg-[#e5e5ea] animate-pulse" />
                 <div className="h-5 w-24 bg-[#e5e5ea] rounded-md animate-pulse" />
               </div>
               <div className="flex gap-4 overflow-hidden">
@@ -356,7 +356,7 @@ const ProfilePage = () => {
           ) : playlists.length === 0 ? (
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-[3px] h-5 rounded-full" style={{ background: P }} />
+                <div className="w-[4px] h-5 rounded-full bg-[#fa243c]" style={{ background: P }} />
                 <h2 className="text-[17px] font-bold text-[#1d1d1f]">Playlists</h2>
               </div>
               <div className="flex flex-col items-center py-12 bg-white rounded-md border border-black/[0.05] text-center">
@@ -383,7 +383,7 @@ const ProfilePage = () => {
         {hL ? (
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-[3px] h-5 rounded-full bg-[#e5e5ea] animate-pulse" />
+              <div className="w-[4px] h-5 rounded-full bg-[#e5e5ea] animate-pulse" />
               <div className="h-5 w-32 bg-[#e5e5ea] rounded-md animate-pulse" />
             </div>
             <div className="flex gap-4 overflow-hidden">
