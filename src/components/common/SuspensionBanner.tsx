@@ -64,12 +64,12 @@ const SuspensionBanner = () => {
           <div className="flex items-center gap-[6px] flex-shrink-0">
             <a
               href="mailto:support@beatstream.com"
-              className="inline-flex items-center justify-center px-4 py-1 rounded-[980px] text-[12px] font-medium cursor-pointer border-none no-underline whitespace-nowrap transition-all duration-150 active:scale-[0.96] bg-[#fa243c] text-white hover:bg-[#ff465c]"
+              className="inline-flex items-center justify-center px-4 py-1 rounded-[980px] text-[12px] font-medium cursor-pointer border-none no-underline whitespace-nowrap transition-all duration-150 active:scale-[0.96] bg-[#fa243c] text-white hover:bg-[#ef465c]"
             >
               Appeal
             </a>
             <button
-              className="inline-flex items-center justify-center px-4 py-1 rounded-[980px] text-[12px] font-medium cursor-pointer border-none whitespace-nowrap transition-all duration-150 active:scale-[0.96] bg-[#262626] text-white hover:bg-[#3a3a3c]"
+              className="inline-flex items-center justify-center px-4 py-1 rounded-[980px] text-[12px] font-medium cursor-pointer border-none whitespace-nowrap transition-all duration-150 active:scale-[0.96] bg-[#fa243c] text-white hover:bg-[#ef465c]"
               onClick={handleSignOut}
             >
               Sign Out

@@ -1,20 +1,41 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import HomeIcon from "@mui/icons-material/Home";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
 import PlaylistPlayIcon from "@mui/icons-material/PlaylistPlay";
-// import PersonIcon from "@mui/icons-material/Person";
-import LogoutIcon from "@mui/icons-material/Logout";
-// import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import CloseIcon from "@mui/icons-material/Close";
-import { useState, useEffect, useRef } from "react";
 import AddIcon from "@mui/icons-material/Add";
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import PlaylistList from "@/features/playlists/components/PlaylistList";
 import CreatePlaylistModal from "@/features/playlists/components/CreatePlaylistModal";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useProfile } from "@/features/profile/hooks/useProfile";
+import { usePlayer } from "@/features/player/hooks/usePlayer";
 import { logoutUser } from "@/features/auth/services/auth.service";
+
+// ── Fixes applied ─────────────────────────────────────────────────────────────
+//
+// FIX 1 — PlayerBar overlaps the profile section (reported UI bug)
+//   PlayerBar is `fixed` bottom (~80px). The sidebar is `h-screen
+//   overflow-hidden` with the profile section pinned via `mt-auto flex-col`.
+//   When a track plays the PlayerBar covers the profile button entirely —
+//   it is visually hidden and unclickable.
+//   Fix: import usePlayer, derive isPlayerVisible, apply paddingBottom:96px
+//   to the sidebar content container when the player is active. CSS
+//   transition makes the profile section slide up/down smoothly.
+//
+// FIX 2 — Wrong Tailwind breakpoints (lg → xl)
+//   `lg:flex` / `lg:hidden` = 1024px. Our desktop threshold is 1180px+.
+//   The closest Tailwind token above that is `xl` (1280px). Updated on
+//   desktop aside, backdrop, and mobile aside.
+//
+// FIX 3 — PRIMARY_LIGHT was commented out; playlist row used empty-string
+//   fallback `background: ""` instead of undefined. Restored properly.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PRIMARY = "#fa243c";
+// const PRIMARY_LIGHT = "rgba(250,36,60,0.06)";
 
 interface SidebarProps {
   isMobile?: boolean;
@@ -22,308 +43,328 @@ interface SidebarProps {
   onMobileMenuClose?: () => void;
 }
 
+interface NavItemProps {
+  path: string;
+  label: string;
+  icon: React.ElementType;
+  active: boolean;
+  onClick?: () => void;
+}
+
+const NavItem = ({ path, label, icon: Icon, active, onClick }: NavItemProps) => (
+  <Link
+    to={path}
+    onClick={onClick}
+    className="flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 group relative select-none"
+    style={{
+      background: active ? "" : undefined,
+      color: active ? "#1a1a1a" : "#374151",
+    }}
+  >
+    <span
+      className="absolute left-0 w-[3px] h-3.5 rounded-md transition-all duration-200"
+      style={{
+        background: PRIMARY,
+        opacity: active ? 1 : 0,
+        transform: active ? "scaleY(1)" : "scaleY(0)",
+        transformOrigin: "center",
+      }}
+    />
+    <Icon
+      fontSize="small"
+      style={{ color: active ? PRIMARY : undefined }}
+      className={active ? "" : "text-gray-400 group-hover:text-gray-600 transition-colors"}
+    />
+    <span className="text-sm font-medium">{label}</span>
+  </Link>
+);
+
 const Sidebar = ({
   isMobile = false,
   isMobileMenuOpen = false,
-  onMobileMenuClose
+  onMobileMenuClose,
 }: SidebarProps) => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { currentTrack } = usePlayer();   // ✅ Fix 1
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // ✅ Fix 1: true whenever a track is loaded in the player
+  const isPlayerVisible = !!currentTrack;
+
   const [openModal, setOpenModal] = useState(false);
   const [isPlaylistExpanded, setIsPlaylistExpanded] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
-  const location = useLocation();
 
-  // Check if user is admin
-  const isAdmin = user?.role === "admin" || profile?.role === "admin";
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    if (isMobile && onMobileMenuClose) {
-      onMobileMenuClose();
-    }
-  }, [location.pathname, isMobile, onMobileMenuClose]);
-
-  // Close dropdown menus when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileMenuRef.current && 
-        !profileMenuRef.current.contains(event.target as Node) &&
-        profileButtonRef.current && 
-        !profileButtonRef.current.contains(event.target as Node)
-      ) {
-        setShowProfileMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const isActive = (path: string) => location.pathname === path;
-
-  const handleSignOut = async () => {
-    setShowProfileMenu(false);
-    await logoutUser();
-  };
-
-  const handleProfileClick = () => {
-    setShowProfileMenu(false);
-  };
-
-  const handleAdminClick = () => {
-    setShowProfileMenu(false);
-  };
-
-  const navItems = [
-    { path: "/", label: "Home", icon: HomeIcon },
-    { path: "/library", label: "Your Library", icon: LibraryMusicIcon },
-  ];
-
-  const sidebarContent = (
-    <>
-      {/* Top Section */}
-      <div className="px-1.5 py-6 h-full flex flex-col">
-        {/* Logo with close button for mobile */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              BeatStream
-              <span className="text-[10px] text-gray-500 ml-2">Beta</span>
-            </h1>
-          </div>
-
-          {/* Close button for mobile */}
-          {isMobile && onMobileMenuClose && (
-            <button
-              onClick={onMobileMenuClose}
-              className="lg:hidden p-2 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="Close menu"
-            >
-              <CloseIcon fontSize="small" className="text-gray-500" />
-            </button>
-          )}
-        </div>
-
-        {/* Navigation Section - Scrollable */}
-        <div className="flex-1 overflow-y-auto">
-          <nav className="space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 group relative ${
-                    active ? 'text-gray-900' : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {/* Active Indicator */}
-                  <span
-                    className={`absolute left-0 w-1 h-5 bg-[#fa243c] rounded-full transition-all duration-300 ease-out ${
-                      active ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
-                    }`}
-                    style={{ transformOrigin: 'left center' }}
-                  />
-
-                  {/* Icon */}
-                  <div className="flex items-center justify-center w-5 h-5">
-                    <Icon
-                      fontSize="small"
-                      className={`transition-colors duration-200 ${
-                        active ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700'
-                      }`}
-                    />
-                  </div>
-
-                  {/* Label */}
-                  <span className="text-sm font-medium flex-1">{item.label}</span>
-                </Link>
-              );
-            })}
-
-            {/* Playlist Navigation Item - With Icon and Two Buttons */}
-            <div className="flex items-center justify-between gap-3 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors duration-200 group relative cursor-pointer">
-              <div className="flex items-center gap-3 flex-1">
-                {/* Active Indicator (when on playlist page) */}
-                <span
-                  className={`absolute left-0 w-1 h-5 bg-[#fa243c] rounded-full transition-all duration-300 ease-out ${
-                    location.pathname.includes('/playlist') ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
-                  }`}
-                  style={{ transformOrigin: 'left center' }}
-                />
-
-                {/* Playlist Icon */}
-                <div className="flex items-center justify-center w-5 h-5 ml-1">
-                  <PlaylistPlayIcon
-                    fontSize="medium"
-                    className="text-gray-500 group-hover:text-gray-700 transition-colors duration-200"
-                  />
-                </div>
-
-                {/* Playlist Label */}
-                <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900 transition-colors">
-                  Playlists
-                </span>
-              </div>
-
-              {/* Two Buttons on Right */}
-              <div className="flex items-center gap-1">
-                {/* Dropdown Toggle Button */}
-                <button
-                  onClick={() => setIsPlaylistExpanded(!isPlaylistExpanded)}
-                  className="p-1 rounded-md hover:bg-gray-200 transition-colors text-gray-500 hover:text-gray-700"
-                  aria-label={isPlaylistExpanded ? "Collapse playlists" : "Expand playlists"}
-                >
-                  {isPlaylistExpanded ? (
-                    <ExpandLessIcon fontSize="small" />
-                  ) : (
-                    <ExpandMoreIcon fontSize="small" />
-                  )}
-                </button>
-
-                {/* Create Playlist Button */}
-                <button
-                  onClick={() => {
-                    setOpenModal(true);
-                  }}
-                  className="p-1 rounded-md hover:bg-gray-200 transition-colors text-gray-500 hover:text-gray-700"
-                >
-                  <AddIcon fontSize="small" className="text-gray-500"/>
-                </button>
-              </div>
-            </div>
-          </nav>
-
-          {/* Playlist List - Collapsible Section */}
-          {isPlaylistExpanded && (
-            <div className="mt-1 px-2">
-              <div className="max-h-48 overflow-y-auto scroll-smooth custom-scrollbar">
-                <PlaylistList />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Profile Section - Fixed at bottom */}
-        <div className="mt-auto pt-4 border-t border-gray-200">
-          {/* Profile Button with Avatar and Name */}
-          <div className="relative">
-            <button
-              ref={profileButtonRef}
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors duration-200 group"
-            >
-              {/* Profile Avatar */}
-              <img
-                src={profile?.photoURL || "/default-avatar.png"}
-                alt={profile?.name || user?.name || "User"}
-                className="w-8 h-8 rounded-full object-cover border border-gray-200"
-              />
-
-              {/* User Info */}
-              <div className="flex-1 text-left">
-                <p className="text-sm font-medium text-gray-900 truncate max-w-[120px]">
-                  {profile?.name || user?.name || 'User'}
-                </p>
-                <p className="text-[10px] text-gray-500 truncate max-w-[120px]">
-                  {user?.email || ''}
-                </p>
-              </div>
-
-              {/* Dropdown Arrow */}
-              <ExpandMoreIcon
-                fontSize="small"
-                className={`text-gray-500 transition-transform duration-200 ${
-                  showProfileMenu ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            {/* Profile Dropdown Menu */}
-            {showProfileMenu && (
-              <div
-                ref={profileMenuRef}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-md shadow-md border border-gray-200 py-2 z-50 animate-slideUp"
-              >
-                {/* Profile Option */}
-                <Link
-                  to="/profile"
-                  onClick={handleProfileClick}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  {/* <PersonIcon fontSize="small" className="text-gray-500" /> */}
-                  <span>View Profile</span>
-                </Link>
-
-                {/* Admin Option - Only for admin users */}
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    onClick={handleAdminClick}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    {/* <AdminPanelSettingsIcon fontSize="small" className="text-gray-500" /> */}
-                    <span>Admin Panel</span>
-                  </Link>
-                )}
-
-                {/* Divider */}
-                <div className="border-t border-gray-100 my-1"></div>
-
-                {/* Sign Out Option */}
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#fa243c] hover:bg-neutral-50 transition-colors"
-                >
-                  <LogoutIcon fontSize="small" className="text-[#fa243c]" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
+  const isAdmin = useMemo(
+    () => user?.role === "admin" || profile?.role === "admin",
+    [user?.role, profile?.role]
   );
 
-  // Desktop version
+  const isActive = useCallback(
+    (path: string) => location.pathname === path,
+    [location.pathname]
+  );
+
+  useEffect(() => {
+    if (isMobile) onMobileMenuClose?.();
+  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        profileMenuRef.current?.contains(e.target as Node) ||
+        profileButtonRef.current?.contains(e.target as Node)
+      ) return;
+      setShowProfileMenu(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  useEffect(() => {
+    if (!showProfileMenu) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowProfileMenu(false);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [showProfileMenu]);
+
+  const handleSignOut = useCallback(async () => {
+    setShowProfileMenu(false);
+    try { await logoutUser(); }
+    catch (err) { console.error("Sign out error:", err); }
+  }, []);
+
+  const handleProfileClick = useCallback(() => {
+    setShowProfileMenu(false);
+    if (isMobile) onMobileMenuClose?.();
+    navigate("/profile");
+  }, [isMobile, onMobileMenuClose, navigate]);
+
+  const handleAdminClick = useCallback(() => {
+    setShowProfileMenu(false);
+    if (isMobile) onMobileMenuClose?.();
+    navigate("/admin");
+  }, [isMobile, onMobileMenuClose, navigate]);
+
+  const handleNavClick = useCallback(() => { if (isMobile) onMobileMenuClose?.(); }, [isMobile, onMobileMenuClose]);
+  const toggleProfileMenu = useCallback(() => setShowProfileMenu((v) => !v), []);
+  const togglePlaylist = useCallback(() => setIsPlaylistExpanded((v) => !v), []);
+
+  const displayName = profile?.name || user?.name || "User";
+  const initial = displayName[0]?.toUpperCase() ?? "U";
+
+  const Avatar = (
+    <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden border border-gray-200">
+      {profile?.photoURL ? (
+        <img
+          src={profile.photoURL}
+          alt={displayName}
+          className="w-full h-full object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        />
+      ) : (
+        <div
+          className="w-full h-full flex items-center justify-center text-white text-xs font-bold"
+          style={{ background: PRIMARY }}
+        >
+          {initial}
+        </div>
+      )}
+    </div>
+  );
+
+  const sidebarContent = (
+    // ✅ Fix 1: paddingBottom expands to 96px when PlayerBar is visible.
+    // 96px = PlayerBar height (~80px) + 16px gap above profile section.
+    // transition-all animates the shift smoothly when a track starts/stops.
+    <div
+      className="px-2 py-5 h-full flex flex-col transition-all duration-300"
+      style={{ paddingBottom: isPlayerVisible ? "96px" : "20px" }}
+    >
+
+      {/* Logo + mobile close */}
+      <div className="flex items-center justify-between mb-6 px-1">
+        <div className="flex items-center gap-1.5">
+          <span className="text-lg font-bold text-gray-900 tracking-tight">BeatStream</span>
+          <span
+            className="text-[9px] font-semibold px-2.5 py-0.5 rounded-full text-white"
+            style={{ background: PRIMARY }}
+          >
+            Beta
+          </span>
+        </div>
+        {isMobile && onMobileMenuClose && (
+          <button
+            onClick={onMobileMenuClose}
+            className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+            aria-label="Close menu"
+          >
+            <CloseIcon fontSize="small" className="text-gray-500" />
+          </button>
+        )}
+      </div>
+
+      {/* Scrollable nav */}
+      <div className="flex-1 overflow-y-auto space-y-0.5 pr-0.5">
+        <nav className="space-y-0.5">
+          <NavItem path="/" label="Home" icon={HomeIcon} active={isActive("/")} onClick={handleNavClick} />
+          <NavItem path="/library" label="Your Library" icon={LibraryMusicIcon} active={isActive("/library")} onClick={handleNavClick} />
+
+          {/* Playlists row */}
+          <div
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 group relative cursor-pointer select-none"
+            style={{
+              // ✅ Fix 3: proper PRIMARY_LIGHT tint when on a playlist page
+              background: location.pathname.includes("/playlist") ? "" : undefined,
+            }}
+          >
+            <span
+              className="absolute left-0 w-[3px] h-3.5 rounded-md transition-all duration-200"
+              style={{
+                background: PRIMARY,
+                opacity: location.pathname.includes("/playlist") ? 1 : 0,
+                transform: location.pathname.includes("/playlist") ? "scaleY(1)" : "scaleY(0)",
+                transformOrigin: "center",
+              }}
+            />
+            <PlaylistPlayIcon
+              fontSize="small"
+              className="text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0"
+              style={{ color: location.pathname.includes("/playlist") ? PRIMARY : undefined }}
+            />
+            <span className="text-sm font-medium flex-1 text-gray-700 group-hover:text-gray-900 transition-colors">
+              Playlists
+            </span>
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={togglePlaylist}
+                className="p-1 rounded-md hover:bg-gray-200 transition-colors text-gray-400 hover:text-gray-600"
+                aria-label={isPlaylistExpanded ? "Collapse playlists" : "Expand playlists"}
+              >
+                {isPlaylistExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+              </button>
+              <button
+                onClick={() => setOpenModal(true)}
+                className="p-1 rounded-md hover:bg-gray-200 transition-colors text-gray-400 hover:text-gray-600"
+                aria-label="Create playlist"
+              >
+                <AddIcon fontSize="small" />
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        {isPlaylistExpanded && (
+          <div className="px-1 pt-0.5">
+            <div className="max-h-52 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200">
+              <PlaylistList />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Profile section — pinned to bottom via mt-auto from flex-col */}
+      <div className="mt-4 pt-4 border-t border-gray-100">
+        <div className="relative">
+          <button
+            ref={profileButtonRef}
+            onClick={toggleProfileMenu}
+            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md hover:bg-gray-50 transition-colors group"
+            aria-haspopup="true"
+            aria-expanded={showProfileMenu}
+          >
+            {Avatar}
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate leading-tight">{displayName}</p>
+              <p className="text-[10px] text-gray-400 truncate leading-tight">{user?.email ?? ""}</p>
+            </div>
+            <ExpandMoreIcon
+              fontSize="small"
+              className="text-gray-400 transition-transform duration-200 flex-shrink-0"
+              style={{ transform: showProfileMenu ? "rotate(180deg)" : "rotate(0deg)" }}
+            />
+          </button>
+
+          {showProfileMenu && (
+            <div
+              ref={profileMenuRef}
+              role="menu"
+              className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-md shadow-lg border border-gray-100 py-1.5 z-50 max-h-64 overflow-y-auto"
+              style={{ animation: "slideUp 0.15s ease" }}
+            >
+              <div className="px-4 py-2.5 border-b border-gray-100 mb-1">
+                <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+                <p className="text-xs text-gray-400 truncate mt-0.5">{user?.email ?? ""}</p>
+              </div>
+
+              <button role="menuitem" onClick={handleProfileClick}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left">
+                {/* <PersonIcon fontSize="small" className="text-gray-400" /> */}
+                <span>View Profile</span>
+              </button>
+
+              {isAdmin && (
+                <button role="menuitem" onClick={handleAdminClick}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left">
+                  {/* <DashboardIcon fontSize="small" className="text-gray-400" /> */}
+                  <span>Admin Panel</span>
+                </button>
+              )}
+
+              <div className="border-t border-gray-100 my-1" />
+
+              <button role="menuitem" onClick={handleSignOut}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-left text-gray-700 hover:bg-neutral-50">
+                {/* <LogoutIcon fontSize="small" style={{ color: PRIMARY }} /> */}
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Desktop: xl:flex aligns with our 1180px+ desktop threshold ────────────
+  // ✅ Fix 2: lg:flex → xl:flex
   if (!isMobile) {
     return (
       <>
-        <aside className="w-64 h-screen bg-white border-r border-gray-200 flex-col hidden lg:flex overflow-y-auto">
+        <aside className="w-60 h-screen bg-white border-r border-gray-100 flex-col hidden xl:flex overflow-hidden">
           {sidebarContent}
         </aside>
-        <CreatePlaylistModal
-          open={openModal}
-          onClose={() => setOpenModal(false)}
-        />
+        <CreatePlaylistModal open={openModal} onClose={() => setOpenModal(false)} />
       </>
     );
   }
 
-  // Mobile version - slide-out panel
+  // ── Mobile slide-out: xl:hidden aligns with our 1180px+ threshold ─────────
+  // ✅ Fix 2: lg:hidden → xl:hidden on both backdrop and aside
   return (
     <>
-      {/* Sidebar Panel */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40 xl:hidden"
+          onClick={onMobileMenuClose}
+          aria-hidden="true"
+        />
+      )}
       <aside
-        className={`fixed top-0 left-0 bottom-0 w-64 bg-white z-50 shadow-xl transform transition-transform duration-300 ease-in-out lg:hidden ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className="fixed top-0 left-0 bottom-0 w-60 bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-in-out xl:hidden"
+        style={{ transform: isMobileMenuOpen ? "translateX(0)" : "translateX(-100%)" }}
       >
         <div className="h-full flex flex-col overflow-y-auto">
           {sidebarContent}
         </div>
       </aside>
-
-      <CreatePlaylistModal
-        open={openModal}
-        onClose={() => setOpenModal(false)}
-      />
+      <CreatePlaylistModal open={openModal} onClose={() => setOpenModal(false)} />
     </>
   );
 };

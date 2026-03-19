@@ -1,395 +1,408 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  getPlaylistById,
-  subscribeToPlaylistSongs,
-  updatePlaylist,
-  deletePlaylist,
-  Playlist,
-  PlaylistSong,
-  playlistSongsToITracks,
+  getPlaylistById, subscribeToPlaylistSongs,
+  updatePlaylist, deletePlaylist,
+  Playlist, PlaylistSong, playlistSongsToITracks,
 } from "../services/playlistService";
+import { HeroInfoPanel } from "@/components/shared/HeroInfoPanel";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import ShuffleIcon from '@mui/icons-material/Shuffle';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import PublicIcon from "@mui/icons-material/Public";
 import LockIcon from "@mui/icons-material/Lock";
-import AddIcon from '@mui/icons-material/Add';
-import ExplicitIcon from '@mui/icons-material/Explicit';
+import ChevronLeftRounded from "@mui/icons-material/ChevronLeftRounded";
+import AnimatedSpinner from "@/components/ui/LoadingSpinner/AnimatedSpinner";
 import { usePlayer } from "@/features/player/hooks/usePlayer";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useClickOutside } from "@/features/playlists/hooks/useClickOutside";
-import { ChevronLeftRounded } from "@mui/icons-material";
-import AnimatedSpinner from "@/components/ui/LoadingSpinner/AnimatedSpinner";
+import { useLikedSongs } from "@/features/likes/hooks/useLikedSongs";
+import { toggleLikeTransaction } from "@/features/likes/services/likeService";
+import { PlayArrowRounded, ShuffleOutlined, Star, StarOutline } from "@mui/icons-material";
+
+const P = "#fa243c";
+const PH = "#e01e33";
+const GR = "linear-gradient(135deg, #fa243c 0%, #bf5af2 100%)";
+const COVER_H = 220;
+
+const parseSecs = (d?: string | number): number => {
+  if (!d) return 0;
+  if (typeof d === "string" && d.includes(":")) {
+    const [m, s] = d.split(":").map(Number);
+    return m * 60 + (s || 0);
+  }
+  const n = typeof d === "string" ? parseInt(d, 10) : d;
+  return isNaN(n) ? 0 : n;
+};
+const fmtDur = (d?: string | number): string => {
+  if (!d) return "—";
+  if (typeof d === "string" && d.includes(":")) return d;
+  const s = typeof d === "string" ? parseInt(d, 10) : d;
+  if (isNaN(s)) return "—";
+  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+};
+
+const PillBtn = ({
+  onClick, children, disabled, style, onMouseEnter, onMouseLeave, className
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & { className?: string }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`flex items-center justify-center gap-2 px-7 py-[9px] rounded-full sm:rounded-md text-[13px] font-semibold text-white shadow-sm transition-colors disabled:opacity-40 ${className || ''}`}
+    style={style}
+    onMouseEnter={onMouseEnter}
+    onMouseLeave={onMouseLeave}
+  >
+    {children}
+  </button>
+);
 
 const PlaylistPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { playTrack } = usePlayer();
   const { user } = useAuth();
+  const { likedSongs } = useLikedSongs();
 
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [songs, setSongs] = useState<PlaylistSong[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Separate state for mobile and desktop menus
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [togglingLike, setTogglingLike] = useState<Set<string>>(new Set());
 
-  // Separate refs for mobile and desktop menus
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const desktopMenuRef = useRef<HTMLDivElement>(null);
-  
-  useClickOutside(mobileMenuRef as React.RefObject<HTMLElement>, () => setMobileMenuOpen(false));
-  useClickOutside(desktopMenuRef as React.RefObject<HTMLElement>, () => setDesktopMenuOpen(false));
-
-  /* -----------------------------
-     Load Playlist + Subscribe Songs
-  ------------------------------ */
+  const menuRef = useRef<HTMLDivElement>(null);
+  useClickOutside(menuRef as React.RefObject<HTMLElement>, () => {
+    setMenuOpen(false);
+    setConfirmDelete(false);
+  });
 
   useEffect(() => {
     if (!id) return;
-
-    const loadPlaylist = async () => {
-      const data = await getPlaylistById(id);
-      setPlaylist(data);
-      setLoading(false);
-    };
-
-    loadPlaylist();
-
-    const unsubscribe = subscribeToPlaylistSongs(id, (data) => {
-      setSongs(data);
-    });
-
-    return () => unsubscribe();
+    getPlaylistById(id).then((d) => { setPlaylist(d); setLoading(false); });
+    return subscribeToPlaylistSongs(id, setSongs);
   }, [id]);
 
-  /* -----------------------------
-     Actions
-  ------------------------------ */
+  // Create a Set of liked song IDs for quick lookup
+  const likedSongIds = useMemo(() => {
+    return new Set(likedSongs.map(song => song.id));
+  }, [likedSongs]);
 
-  const handlePlayAll = () => {
-    if (songs.length > 0) {
-      const tracks = playlistSongsToITracks(songs);
-      playTrack(tracks[0], tracks);
-    }
-  };
+  const tracks = useMemo(() => playlistSongsToITracks(songs), [songs]);
+  const totalMins = useMemo(() => Math.floor(songs.reduce((a, s) => a + parseSecs(s.duration), 0) / 60), [songs]);
 
-  const handleShufflePlay = () => {
-    if (songs.length > 0) {
-      const shuffled = [...songs].sort(() => Math.random() - 0.5);
-      const tracks = playlistSongsToITracks(shuffled);
-      playTrack(tracks[0], tracks);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!id) return;
-    await deletePlaylist(id);
-    navigate("/library");
-  };
-
-  const togglePublic = async () => {
+  const handlePlayAll = useCallback(() => { if (tracks.length) playTrack(tracks[0], tracks); }, [tracks, playTrack]);
+  const handleShuffle = useCallback(() => {
+    if (!songs.length) return;
+    const sh = playlistSongsToITracks([...songs].sort(() => Math.random() - 0.5));
+    playTrack(sh[0], sh);
+  }, [songs, playTrack]);
+  const handleDelete = useCallback(async () => { if (!id) return; await deletePlaylist(id); navigate("/library"); }, [id, navigate]);
+  const togglePublic = useCallback(async () => {
     if (!id || !playlist) return;
+    await updatePlaylist(id, { isPublic: !playlist.isPublic });
+    setPlaylist((p) => p ? { ...p, isPublic: !p.isPublic } : p);
+    setMenuOpen(false);
+  }, [id, playlist]);
 
-    await updatePlaylist(id, {
-      isPublic: !playlist.isPublic,
-    });
+  const handleLikeToggle = useCallback(async (songId: string) => {
+    if (!user) return;
 
-    setPlaylist({
-      ...playlist,
-      isPublic: !playlist.isPublic,
-    });
-    
-    // Close menus after action
-    setMobileMenuOpen(false);
-    setDesktopMenuOpen(false);
-  };
+    // Prevent double-clicking
+    if (togglingLike.has(songId)) return;
 
-  const formatDuration = (duration?: string | number) => {
-    if (!duration) return "0:00";
-    if (typeof duration === 'string' && duration.includes(':')) {
-      return duration;
+    setTogglingLike(prev => new Set(prev).add(songId));
+
+    try {
+      await toggleLikeTransaction(user.uid, songId);
+    } catch (error) {
+      console.error('Failed to toggle like:', error);
+    } finally {
+      setTogglingLike(prev => {
+        const next = new Set(prev);
+        next.delete(songId);
+        return next;
+      });
     }
-    const seconds = typeof duration === 'string' ? parseInt(duration, 10) : duration;
-    if (isNaN(seconds)) return "0:00";
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  // Calculate total duration
-  const totalMinutes = songs.reduce((acc, song) => {
-    const duration = song.duration;
-    if (!duration) return acc;
-    if (typeof duration === 'string' && duration.includes(':')) {
-      const [minutes, seconds] = duration.split(':').map(Number);
-      return acc + (minutes * 60 + (seconds || 0));
-    }
-    const seconds = typeof duration === 'string' ? parseInt(duration, 10) : duration;
-    return acc + (isNaN(seconds) ? 0 : seconds);
-  }, 0);
-
-  const totalMinutesFormatted = Math.floor(totalMinutes / 60);
-
-  /* -----------------------------
-     States
-  ------------------------------ */
+  }, [user, togglingLike]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          {/* <div className="w-8 h-8 border-2 border-gray-200 border-t-[#fa243c] rounded-full animate-spin"></div> */}
-          <AnimatedSpinner size={28} color="#fa243c" />
-          <p className="text-sm text-gray-400">Loading playlist...</p>
+          <AnimatedSpinner size={28} color={P} />
+          <p className="text-[13px] text-[#6e6e73]">Loading playlist…</p>
         </div>
       </div>
     );
   }
-
   if (!playlist) return null;
 
   const isOwner = user?.uid === playlist.userId;
+  const createdDate = playlist.createdAt?.toDate?.()?.toLocaleDateString("en-US", {
+    month: "long", day: "numeric", year: "numeric",
+  }) ?? "";
 
-  const createdDate =
-    playlist.createdAt?.toDate?.()?.toLocaleDateString() || "";
+  // Full description — uses playlist.description if set, else auto-generated
+  const description = playlist.description ||
+    `A collection of ${songs.length} ${songs.length === 1 ? "song" : "songs"}${user?.name ? ` curated by ${user.name}` : ""}.\n\nBuild this playlist by adding songs from your library and discover new music to keep it fresh. Play all tracks in order or shuffle for a different experience every time.`;
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 px-4 sm:px-6 md:px-8 py-6 md:py-10">
+    <div className="min-h-screen bg-[#f5f5f7]">
 
-      <div className="flex justify-between items-center mb-4">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-0 text-xs sm:text-sm text-gray-500 hover:text-[#fa243c] transition-colors group"
-        >
-          <div className="">
-            <ChevronLeftRounded fontSize="large" className="text-[#fa243c] group-hover:text-[#fa243c]" />
-          </div>
-          <h1 className="text-lg font-semibold text-[#fa243c]">Playlist</h1>
-        </button>
+      {/* Sticky nav */}
+      <div className="sticky top-0 z-20 bg-[#f5f5f7]/50 backdrop-blur-md border-b border-black/[0.06]">
+        <div className="max-w-7xl mx-aut px-6 sm:px-8 flex items-center justify-between h-14">
+          <button onClick={() => navigate(-1)}
+            className="flex items-center gap-0.5 text-[15px] font-semibold"
+            style={{ color: P }}>
+            <ChevronLeftRounded sx={{ fontSize: 26 }} />
+            <span>Playlist</span>
+          </button>
 
-        {/* Three-dot menu for mobile - only visible on mobile */}
-        {isOwner && (
-          <div className="relative md:hidden">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-[#fa243c] hover:text-[#fa243c] p-2"
-              aria-label="Playlist options"
-            >
-              <MoreHorizIcon fontSize="medium" />
-            </button>
-
-            {/* Mobile Dropdown Menu */}
-            {mobileMenuOpen && (
-              <div
-                ref={mobileMenuRef}
-                className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-xl border border-gray-200 py-1 z-50"
-              >
-                <button
-                  onClick={togglePublic}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
-                >
-                  <span>{playlist.isPublic ? "Make Private" : "Make Public"}</span>
-                </button>
-
-                <div className="border-t border-gray-100 my-1"></div>
-
-                <button
-                  onClick={handleDelete}
-                  className="w-full text-left px-4 py-2 text-sm text-[#fa243c] hover:bg-red-50 transition-colors flex items-center gap-2"
-                >
-                  <span>Delete</span>
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-
-      {/* Top Section - Playlist Info */}
-      <div className="flex flex-col md:flex-row gap-6 md:gap-10 relative">
-        {/* Playlist Cover */}
-        <div className="relative w-40 h-40 sm:w-56 sm:h-56 mx-auto md:mx-0 bg-gradient-to-br from-[#fa243c] to-purple-400 rounded-md shadow-xl overflow-hidden flex-shrink-0">
-          {playlist.coverURL ? (
-            <img
-              src={playlist.coverURL}
-              alt={playlist.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <LibraryMusicIcon className="text-white" sx={{ fontSize: { xs: 60, md: 80, lg: 100 } }} />
+          {isOwner && (
+            <div className="relative" ref={menuRef}>
+              <button onClick={() => setMenuOpen((v) => !v)}
+                className="p-1.5 rounded-md hover:bg-black/[0.06] transition-colors"
+                style={{ color: P }}>
+                <MoreHorizIcon sx={{ fontSize: 22 }} />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl border border-black/[0.08] py-1.5 z-50 overflow-hidden">
+                  <button onClick={togglePublic}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-[#1d1d1f] hover:bg-[#f5f5f7] transition-colors text-left">
+                    {playlist.isPublic
+                      ? <><span>Make Private</span></>
+                      : <><span>Make Public</span></>}
+                  </button>
+                  <div className="h-px bg-[#f2f2f7] my-1" />
+                  {confirmDelete ? (
+                    <div className="px-4 py-2.5 flex items-center gap-2">
+                      <span className="text-[12px] font-medium flex-1" style={{ color: P }}>Delete?</span>
+                      <button onClick={handleDelete}
+                        className="text-[11px] font-semibold text-white px-2.5 py-1 rounded-md"
+                        style={{ background: P }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = PH)}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = P)}>Yes</button>
+                      <button onClick={() => setConfirmDelete(false)}
+                        className="text-[11px] font-semibold text-[#6e6e73] hover:text-[#1d1d1f]">No</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmDelete(true)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] hover:bg-red-50 text-left"
+                      style={{ color: P }}>Delete Playlist</button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
+      </div>
 
-        {/* Playlist Info - Fixed height matching cover */}
-        <div className="flex-1 flex flex-col h-40 sm:h-56 md:h-auto">
-          {/* Top section - Pushed to top */}
-          <div className="flex flex-col justify-start">
-            <div className="flex items-center gap-3 justify-center md:justify-start">
-              <h1 className="text-3xl sm:text-4xl font-semibold text-neutral-700">{playlist.name}</h1>
-              <ExplicitIcon className="text-gray-400" fontSize="small" />
-            </div>
+      <div className="max-w-7xl mx-aut px-1 sm:px-8 pb-16">
 
-            <h2 className="text-[#fa243c] text-xl sm:text-2xl mt-0.5 font-medium text-center md:text-left">
-              {isOwner ? 'Your Playlist' : 'Playlist'}
-            </h2>
+        {/* ── Hero ── */}
+        <div className="pt-10 pb-10">
+          <div className="flex flex-col sm:flex-row gap-8 items-start">
 
-            <div className="text-xs sm:text-sm text-gray-500 mt-2 flex flex-wrap items-center justify-center md:justify-start gap-2">
-              <span className="flex items-center gap-1">
-                {playlist.isPublic ? (
-                  <PublicIcon fontSize="small" className="text-gray-400" />
-                ) : (
-                  <LockIcon fontSize="small" className="text-gray-400" />
-                )}
-                <span>{playlist.isPublic ? "Public" : "Private"}</span>
-              </span>
-              <span className="w-1 h-1 rounded-full bg-gray-300" />
-              <span>{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
-              <span className="w-1 h-1 rounded-full bg-gray-300" />
-              <span>{totalMinutesFormatted} min</span>
-              {createdDate && (
-                <>
-                  <span className="w-1 h-1 rounded-full bg-gray-300" />
-                  <span>{createdDate}</span>
-                </>
+            {/* Cover — fixed 220×220 */}
+            <div
+              className="shrink-0 mx-auto sm:mx-0 rounded-md overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.18)]"
+              style={{ width: COVER_H, height: COVER_H, background: GR }}
+            >
+              {playlist.coverURL ? (
+                <img src={playlist.coverURL} alt={playlist.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <LibraryMusicIcon className="text-white/80" sx={{ fontSize: 84 }} />
+                </div>
               )}
             </div>
 
-            {/* Description - hidden on mobile to save space */}
-            <p className="hidden md:block text-gray-500 text-xs sm:text-sm mt-4 max-w-xl leading-relaxed text-center md:text-left">
-              {`A collection of ${songs.length} songs curated by ${user?.name || 'you'}.`}
-            </p>
-          </div>
-
-          {/* Spacer - Pushes buttons to bottom */}
-          <div className="flex-1"></div>
-
-          {/* Action Buttons - Fixed at bottom */}
-          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
-            <button
-              onClick={handlePlayAll}
-              className="w-[35%] md:w-auto bg-[#fa243c] hover:bg-[#fa243c] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
-            >
-              <PlayArrowIcon fontSize="small" /> <span className="text-sm">Play</span>
-            </button>
-
-            <button
-              onClick={handleShufflePlay}
-              className="w-[35%] md:w-auto bg-[#fa243c] hover:bg-[#fa243c] text-white transition px-3 py-2 md:py-1.5 rounded-full sm:rounded-md font-medium flex items-center justify-center gap-1 text-sm shadow-sm"
-            >
-              <ShuffleIcon fontSize="small" /> <span className="text-sm">Shuffle</span>
-            </button>
-
-            {/* Three-dot menu for desktop - only visible on desktop */}
-            {isOwner && (
-              <div className="hidden md:block relative ml-auto">
-                <button
-                  onClick={() => setDesktopMenuOpen(!desktopMenuOpen)}
-                  className="text-[#fa243c] hover:text-[#fa243c] p-2"
-                  aria-label="Playlist options"
-                >
-                  <MoreHorizIcon fontSize="medium" />
-                </button>
-
-                {/* Desktop Dropdown Menu */}
-                {desktopMenuOpen && (
-                  <div
-                    ref={desktopMenuRef}
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-xl border border-gray-200 py-1 z-50"
-                  >
-                    <button
-                      onClick={togglePublic}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-2"
+            {/* Info panel — height locked to COVER_H on desktop */}
+            <HeroInfoPanel
+              title={playlist.name}
+              subtitle={isOwner ? "Your Playlist" : "Playlist"}
+              description={description}
+              meta={
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="flex items-center gap-1">
+                    {playlist.isPublic
+                      ? <PublicIcon sx={{ fontSize: 12 }} className="text-[#aeaeb2]" />
+                      : <LockIcon sx={{ fontSize: 12 }} className="text-[#aeaeb2]" />}
+                    {playlist.isPublic ? "Public" : "Private"}
+                  </span>
+                  <span className="w-[3px] h-[3px] rounded-md bg-[#aeaeb2]" />
+                  <span>{songs.length} {songs.length === 1 ? "song" : "songs"}</span>
+                  <span className="w-[3px] h-[3px] rounded-md bg-[#aeaeb2]" />
+                  <span>{totalMins} min</span>
+                  {createdDate && (
+                    <><span className="w-[3px] h-[3px] rounded-md bg-[#aeaeb2]" /><span>{createdDate}</span></>
+                  )}
+                </div>
+              }
+              actions={
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                  <div className="flex w-full gap-2 sm:w-auto">
+                    <PillBtn
+                      onClick={handlePlayAll}
+                      disabled={songs.length === 0}
+                      style={{ background: P }}
+                      onMouseEnter={(e) => { if (songs.length > 0) e.currentTarget.style.background = PH; }}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = P)}
+                      className="flex-1 sm:flex-initial"
                     >
-                      <span>{playlist.isPublic ? "Make Private" : "Make Public"}</span>
-                    </button>
+                      <PlayArrowRounded sx={{ fontSize: 18 }} />Play
+                    </PillBtn>
 
-                    <div className="border-t border-gray-100 my-1"></div>
-
-                    <button
-                      onClick={handleDelete}
-                      className="w-full text-left px-4 py-2 text-sm text-[#fa243c] hover:bg-red-50 transition-colors flex items-center gap-2"
+                    <PillBtn
+                      onClick={handleShuffle}
+                      disabled={songs.length === 0}
+                      style={{ background: P }}
+                      onMouseEnter={(e) => { if (songs.length > 0) e.currentTarget.style.background = PH; }}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = P)}
+                      className="flex-1 sm:flex-initial"
                     >
-                      <span>Delete</span>
-                    </button>
+                      <ShuffleOutlined sx={{ fontSize: 16 }} />Shuffle
+                    </PillBtn>
                   </div>
-                )}
-              </div>
-            )}
+
+                  <button className="hidden sm:block p-2 rounded-md hover:bg-black/[0.06] transition-colors text-[#6e6e73]">
+                    <MoreHorizIcon sx={{ fontSize: 20 }} />
+                  </button>
+                </div>
+              }
+            />
           </div>
         </div>
-      </div>
 
-      {/* Track List Section */}
-      <div className="mt-8 md:mt-10">
+        {/* ── Song table — Apple Music columns: Song / Artist / Album / Time ── */}
         {songs.length > 0 ? (
-          <div>
-            {songs.map((song, index) => {
-              // Alternate row colors
-              const rowColor = index % 2 === 0
-                ? 'bg-gray-200/60' // Slightly darker for even rows
-                : 'bg-gray-100/20'; // Pure white for odd rows
+          <div className="overflow-hidden">
+
+            {/* Column headers */}
+            <div
+              className="grid items-center pr-1 sm:px-5 py-2.5 border-b border-[#f2f2f7]"
+              style={{ gridTemplateColumns: "40px 1fr 1fr 1fr 56px 32px" }}
+            >
+              <span className="text-[11px] font-semibold text-[#8e8e93] tracking-wider"></span> {/* Empty header for star column */}
+              <span className="text-[11px] font-semibold text-[#8e8e93] tracking-wider hidden md:block">Song</span>
+              <span className="text-[11px] font-semibold text-[#8e8e93] tracking-wider hidden md:block">Artist</span>
+              <span className="text-[11px] font-semibold text-[#8e8e93] tracking-wider hidden lg:block">Album</span>
+              <span className="text-[11px] font-semibold text-[#8e8e93] tracking-wider text-right hidden sm:table-cell">Time</span>
+              <span />
+            </div>
+
+            {/* Rows — alternating bg, Apple Music style */}
+            {songs.map((song, i) => {
+              const isLiked = likedSongIds.has(song.id);
+              const isToggling = togglingLike.has(song.id);
 
               return (
                 <div
                   key={song.id}
-                  className={`group flex items-center justify-between px-10 py-1 mb-1 rounded-md transition-all duration-200 cursor-pointer ${rowColor} hover:bg-zinc-300/20`}
-                  onClick={() => {
-                    const tracks = playlistSongsToITracks(songs);
-                    const trackIndex = songs.findIndex(s => s.id === song.id);
-                    playTrack(tracks[trackIndex], tracks);
-                  }}
+                  onClick={() => playTrack(tracks[i], tracks)}
+                  className={`
+    group grid items-center px-5 py-2.5 cursor-pointer transition-colors rounded-md 
+    hover:bg-[#e8e8e8] 
+    ${i % 2 === 0 ? "bg-[#f5f5f7]" : "bg-[#fafafa]"}
+    ${i !== songs.length - 1 ? "border-b border-[#f5f5f7]" : ""}
+    grid-cols-[40px_1fr_32px] sm:grid-cols-[40px_1fr_1fr_1fr_56px_32px]
+  `}
                 >
-                  <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0">
-                    <span className="w-5 text-gray-400 text-sm">{index + 1}</span>
+                  {/* Star icon - replaces the index number */}
+                  {/* Star icon - replaces the index number */}
+                  {/* Star icon - replaces the index number */}
+                  <div className="flex items-center justify-start relative">
+                    <button
+                      className={`
+      transition-all duration-200 w-6 h-6 flex items-center justify-center rounded-md
+      ${isLiked
+                          ? 'opacity-100 hover:bg-black/[0.08]'
+                          : 'opacity-0 group-hover:opacity-100 hover:bg-black/[0.08]'
+                        }
+      ${isToggling ? 'opacity-50 cursor-progress' : ''}
+      ${!user ? 'opacity-0 pointer-events-none' : ''}
+      group/star-btn relative
+    `}
+                      style={{ color: P }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLikeToggle(song.id);
+                      }}
+                      disabled={isToggling || !user}
+                      aria-label={isLiked ? `Remove ${song.title} from likes` : `Like ${song.title}`}
+                    >
+                      {isLiked ? (
+                        <Star sx={{ fontSize: 12 }} />
+                      ) : (
+                        <StarOutline sx={{ fontSize: 12 }} />
+                      )}
 
-                    <div className="min-w-0 -space-y-0.5">
-                      <p className="font-medium text-sm text-neutral-700 max-w-36 sm:max-w-full truncate">
-                        {song.title}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1 max-w-28 sm:max-w-80 truncate">
-                        {song.artist}
-                      </p>
+                      {/* Tooltip - controlled by button hover */}
+                      <span className="
+      absolute left-1/2 -translate-x-1/2 bottom-full mb-1 
+      px-2 py-1 text-[10px] font-medium text-neutral-800 bg-neutral-50 rounded
+      opacity-0 group-hover/star-btn:opacity-100 transition-opacity
+      pointer-events-none whitespace-nowrap z-10
+      shadow-lg
+    ">
+                        {isLiked ? 'Favourited' : 'Favourite'}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Song — thumbnail + title + artist (mobile) */}
+                  <div className="flex items-center gap-3 min-w-0 pr-2 sm:pr-4">
+                    <div className="w-10 h-10 shrink-0 rounded-md overflow-hidden shadow-sm">
+                      {song.coverUrl || song.imageUrl ? (
+                        <img src={song.coverUrl || song.imageUrl} alt={song.title}
+                          className="w-full h-full object-cover" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ background: GR }}>
+                          <LibraryMusicIcon sx={{ fontSize: 13 }} className="text-white/80" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1"> {/* Removed max-w-36, added flex-1 */}
+                      <p className="text-[13px] font-semibold text-[#1d1d1f] truncate leading-tight">{song.title}</p>
+                      {/* Artist shown below title only on mobile */}
+                      <p className="text-[11px] text-[#6e6e73] truncate mt-0.5 md:hidden">{song.artist}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 sm:gap-6 flex-shrink-0">
-                    <span className="text-gray-400 text-xs font-semibold">
-                      {formatDuration(song.duration)}
-                    </span>
-                    <button
-                      className="opacity-0 group-hover:opacity-100 text-[#fa243c] hover:text-[#fa243c] transition"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle individual song menu if needed
-                      }}
-                    >
-                      <MoreHorizIcon fontSize="small" />
-                    </button>
-                  </div>
+                  {/* Artist — desktop only */}
+                  <p className="text-[13px] text-[#3c3c43] truncate pr-4 hidden sm:block">{song.artist}</p>
+
+                  {/* Album — large screens only */}
+                  <p className="text-[13px] text-[#3c3c43] truncate pr-4 hidden lg:block">
+                    {song.album || "—"}
+                  </p>
+
+                  {/* Time - hidden on mobile, visible on sm and up */}
+                  <span className="text-[13px] text-[#8e8e93] tabular-nums text-right hidden sm:block">
+                    {fmtDur(song.duration)}
+                  </span>
+
+                  {/* ⋯ per row - always visible on mobile, hover on desktop */}
+                  <button
+                    className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-black/[0.08] ml-auto sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                    style={{ color: P }}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="More options"
+                  >
+                    <MoreHorizIcon sx={{ fontSize: 16 }} />
+                  </button>
                 </div>
               );
             })}
           </div>
         ) : (
-          /* Empty State */
-          <div className="text-center py-12 bg-gray-50 rounded-md">
-            <div className="w-16 h-16 mx-auto mb-3 bg-white rounded-full flex items-center justify-center shadow-sm">
-              <LibraryMusicIcon className="text-gray-400" sx={{ fontSize: 28 }} />
+          <div className="flex flex-col items-center py-20 text-center bg-white rounded-md border border-black/[0.05] shadow-sm">
+            <div className="w-20 h-20 rounded-md bg-[#f5f5f7] flex items-center justify-center mb-5">
+              <LibraryMusicIcon sx={{ fontSize: 36 }} className="text-[#c7c7cc]" />
             </div>
-            <h3 className="text-sm font-medium text-neutral-700 mb-1">No songs yet</h3>
-            <p className="text-xs text-gray-500 mb-4">Add songs to this playlist</p>
-            <button className="px-4 py-2 bg-[#fa243c] text-white text-xs font-medium rounded-md hover:bg-[#fa243c] transition-colors inline-flex items-center gap-1">
-              <AddIcon fontSize="small" />
-              <span>Browse Music</span>
-            </button>
+            <h3 className="text-[15px] font-semibold text-[#1d1d1f] mb-1.5">No songs yet</h3>
+            <p className="text-[13px] text-[#6e6e73]">Add songs to this playlist from the home screen</p>
           </div>
         )}
       </div>

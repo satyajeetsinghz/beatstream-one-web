@@ -1,187 +1,124 @@
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useHistory } from "../hooks/useHistory";
-import SongCard from "@/features/songs/components/SongCard";
-// import HistoryIcon from '@mui/icons-material/History';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import { clearHistory } from "../services/historyService";
-// import { useResponsive } from "@/components/layout/hooks/useResponsive";
-import { useState, useRef } from "react";
+import { useState, useCallback } from "react";
+import { useAuth }       from "@/features/auth/hooks/useAuth";
+import { useHistory }    from "../hooks/useHistory";
+import { clearHistory }  from "../services/historyService";
+import SongCard          from "@/features/songs/components/SongCard";
+import { SectionShell } from "@/components/shared/SectionShell";
+
+// ── Bugs fixed ────────────────────────────────────────────────────────────────
+// BUG 1 — window.confirm() blocks the main thread.
+//         Fixed: inline two-step confirm matching the admin UI pattern.
+// BUG 2 — alert() for error feedback.
+//         Fixed: inline error state rendered below the header.
+// BUG 3 — Gradient fade divs used `absolute` positioning but the parent
+//         had no `relative` context outside the scroll area — the gradients
+//         appeared at the wrong place on the page.
+//         Fixed: gradients moved into SectionShell where they are correctly
+//         anchored to the scroll container.
+// BUG 4 — `w-[160px]` was set on the flex container (wrong — should be on
+//         individual items). This broke wrapping and item sizing.
+//         Fixed: flex container uses minWidth: "min-content" only, each item
+//         has its own fixed width via the SongCard wrapper div.
+// BUG 5 — handleClearHistory and scroll callbacks recreated every render.
+//         Fixed: useCallback throughout.
+// ─────────────────────────────────────────────────────────────────────────────
 
 const RecentlyPlayed = () => {
-  const { user } = useAuth();
-  const { historyTracks, loading, refresh } = useHistory(user?.uid || "");
-  const [clearing, setClearing] = useState(false);
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(true);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  // const { isMobile } = useResponsive();
+  const { user }                                  = useAuth();
+  const { historyTracks, loading, refresh }       = useHistory(user?.uid ?? "");
+  const [clearing,     setClearing]               = useState(false);
+  const [confirmClear, setConfirmClear]           = useState(false);
+  const [clearError,   setClearError]             = useState<string | null>(null);
 
-  const handleClearHistory = async () => {
+  const handleClearConfirm = useCallback(async () => {
     if (!user?.uid) return;
-
-    const confirmClear = window.confirm(
-      "Are you sure you want to clear your listening history?"
-    );
-
-    if (!confirmClear) return;
-
+    setClearing(true);
+    setClearError(null);
+    setConfirmClear(false);
     try {
-      setClearing(true);
       await clearHistory(user.uid);
       refresh();
-    } catch (error) {
-      console.error("Failed to clear history:", error);
-      alert("Failed to clear history");
+    } catch {
+      setClearError("Failed to clear history. Please try again.");
     } finally {
       setClearing(false);
     }
-  };
+  }, [user?.uid, refresh]);
 
-  const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      setShowLeftArrow(scrollLeft > 10);
-      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
-
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-    }
-  };
-
-  // Loading State
+  // ── Loading skeleton ──────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="w-full animate-pulse">
-        {/* Header - Responsive */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center justify-between mb-4 px-0.5">
           <div className="flex items-center gap-2">
-            <div className="w-1 h-4 sm:h-5 bg-[#fa243c] rounded-full"></div>
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recently Played</h2>
+            <div className="w-[3px] h-5 bg-gray-200 rounded-full" />
+            <div className="h-5 w-36 bg-gray-200 rounded-md" />
           </div>
-          <div className="w-20 sm:w-16 h-6 sm:h-8 bg-gray-200 rounded-full ml-auto sm:ml-0"></div>
+          <div className="w-24 h-7 bg-gray-100 rounded-full" />
         </div>
-
-        {/* Horizontal Scroll Skeleton */}
-        <div className="relative">
-          <div className="flex gap-3 sm:gap-4 overflow-x-hidden">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-40 sm:w-44 md:w-48 animate-pulse">
-                <div className="aspect-square bg-gray-200 rounded-lg sm:rounded-xl mb-2"></div>
-                <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-                <div className="h-2 sm:h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
-          </div>
+        <div className="flex gap-3 sm:gap-4 overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="w-[140px] sm:w-[172px] flex-shrink-0">
+              <div className="aspect-square bg-gray-100 rounded-xl mb-2" />
+              <div className="h-3.5 bg-gray-100 rounded w-3/4 mb-1.5" />
+              <div className="h-3   bg-gray-100 rounded w-1/2" />
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  // Don't render if no history
-  if (!historyTracks || historyTracks.length === 0) return null;
+  if (!historyTracks?.length) return null;
+
+  // ── Action slot: "Remove History" with inline confirm ────────────────────
+  const action = confirmClear ? (
+    <div className="flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-[980px] px-2.5 py-1">
+      <span className="text-xs font-medium text-red-500 whitespace-nowrap">Remove?</span>
+      <button
+        onClick={handleClearConfirm}
+        disabled={clearing}
+        className="text-xs font-semibold text-white bg-[#fa243c] rounded-[980px] px-2 py-0.5 hover:bg-[#e01e33] transition-colors disabled:opacity-50 border-none cursor-pointer"
+      >
+        {clearing ? "…" : "Yes"}
+      </button>
+      <button
+        onClick={() => setConfirmClear(false)}
+        className="text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors bg-none border-none cursor-pointer"
+      >
+        No
+      </button>
+    </div>
+  ) : (
+    <button
+      onClick={() => setConfirmClear(true)}
+      disabled={clearing}
+      className="text-xs text-gray-400 hover:text-[#fa243c] transition-colors px-3 py-1.5 rounded-[980px] bg-gray-50 hover:bg-red-50 border border-transparent hover:border-red-100 disabled:opacity-50 whitespace-nowrap"
+    >
+      {clearing ? "Removing…" : "Clear History"}
+    </button>
+  );
 
   return (
-    <div className="w-full group/recent">
-      {/* Header with Apple Music styling - Responsive */}
-      <div className="flex flex-row sm:items-center justify-between gap-3 mb-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="w-1 h-4 sm:h-5 bg-[#fa243c] rounded-full"></div>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recently Played</h2>
-          {/* <span className="text-xs text-gray-400">
-            {historyTracks.length} {historyTracks.length === 1 ? 'song' : 'songs'}
-          </span> */}
-        </div>
-
-        <div className=" sm:mr-2">
-          {/* Clear All Button - Responsive */}
-          {historyTracks.length > 0 && (
-            <button
-              onClick={handleClearHistory}
-              disabled={clearing}
-              className={`ml-0 sm:ml-2 text-xs text-gray-500/80 hover:text-white transition-colors px-2 py-1 rounded-md bg-slate-100 hover:bg-[#fa243c] whitespace-nowrap ${clearing ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-            >
-              {clearing ? 'Removing...' : 'Remove History'}
-            </button>
-          )}
-        </div>
-
-        {/* History indicator - Responsive */}
-        {/* <div className="flex items-center gap-1 text-xs text-gray-400">
-          <HistoryIcon fontSize="small" className="text-gray-300" />
-          <span>{isMobile ? 'History' : 'From your history'}</span>
-        </div> */}
-      </div>
-
-      {/* Horizontal Scroll Container with Navigation Buttons */}
-      <div className="relative">
-        {/* Left Navigation Button */}
-        {showLeftArrow && (
-          <button
-            onClick={scrollLeft}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover/recent:opacity-100 transition-opacity duration-200 hover:bg-gray-50 -ml-3"
-            aria-label="Scroll left"
-          >
-            <ChevronLeftIcon className="text-gray-600" fontSize="small" />
-          </button>
-        )}
-
-        {/* Scrollable Content */}
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="overflow-x-auto scrollbar-hide scroll-smooth pb-2"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          <div className="flex w-[160px] sm:w-[180px] gap-2 sm:gap-4 cursor-pointer" style={{ minWidth: 'min-content' }}>
-            {historyTracks.map((track, index) => (
-              <div key={track.id} className="w-[140px] sm:w-[172px] flex-shrink-0">
-                <SongCard
-                  track={track}
-                  songs={historyTracks}
-                  variant="default"
-                  index={index}
-                  disableLike={true}
-                />
-              </div>
-            ))}
+    <div className="w-full">
+      <SectionShell title="Recently Played" action={action} groupName="recent">
+        {historyTracks.map((track, index) => (
+          <div key={track.id} className="w-[140px] sm:w-[172px] flex-shrink-0">
+            <SongCard
+              track={track}
+              songs={historyTracks}
+              variant="default"
+              index={index}
+              disableLike={true}
+            />
           </div>
-        </div>
+        ))}
+      </SectionShell>
 
-        {/* Right Navigation Button */}
-        {showRightArrow && (
-          <button
-            onClick={scrollRight}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center opacity-0 group-hover/recent:opacity-100 transition-opacity duration-200 hover:bg-gray-50 -mr-3"
-            aria-label="Scroll right"
-          >
-            <ChevronRightIcon className="text-gray-600" fontSize="small" />
-          </button>
-        )}
-      </div>
-
-      {/* Gradient fade indicators */}
-      <div className="absolute left-0 mt-2 w-8 h-32 bg-gradient-to-r from-white to-transparent pointer-events-none"></div>
-      <div className="absolute right-0 mt-2 w-8 h-32 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
-
-      {/* View all link for mobile (if more than 6 items) */}
-      {/* {historyTracks.length > 6 && isMobile && (
-        <div className="mt-4 text-center">
-          <button className="text-xs text-gray-400 hover:text-[#fa243c] transition-colors">
-            View all {historyTracks.length} songs
-          </button>
-        </div>
-      )} */}
+      {/* Inline error */}
+      {clearError && (
+        <p className="text-xs text-red-500 mt-2 px-0.5">{clearError}</p>
+      )}
     </div>
   );
 };

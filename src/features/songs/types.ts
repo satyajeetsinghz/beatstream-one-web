@@ -6,6 +6,7 @@ export interface ISong {
   artist: string;
   audioUrl?: string;
   coverUrl: string;
+  imageUrl?:  string;
   duration?: string;
   album?: string;
   sectionIds: string[];

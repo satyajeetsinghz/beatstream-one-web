@@ -99,11 +99,11 @@ const PlayerBar = () => {
     if (!currentTrack) return null;
 
     // Mobile version - seamless integration above mobile nav
-    if (isMobile) {
+    if (isMobile || isTablet) {
         return (
-            <div className="fixed bottom-[64px] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
+            <div className="fixed bottom-[60px] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
                 {/* Main Player Bar - Apple Music style */}
-                <div className="px-3 py-2 flex items-center gap-2">
+                <div className="px-3 sm:px-8 py-2 flex items-center gap-2">
                     {/* Album Art */}
                     <img
                         src={currentTrack.coverUrl || '/default-album.jpg'}
@@ -214,7 +214,7 @@ const PlayerBar = () => {
                                 </div>
 
                                 {/* Arrow indicator */}
-                                <div className="absolute -bottom-1 right-4 w-2 h-2 bg-white border-r border-b border-gray-200 transform rotate-45"></div>
+                                {/* <div className="absolute -bottom-1 right-4 w-2 h-2 bg-white border-r border-b border-gray-200 transform rotate-45"></div> */}
                             </div>
                         )}
                     </div>
